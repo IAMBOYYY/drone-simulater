@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DroneLab Pro</title>
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>
+<!-- Skulpt: Real Python in the browser -->
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg0:#11111b;--bg1:#1e1e2e;--bg2:#181825;
+  --border:#313244;--text:#cdd6f4;--sub:#585b70;--sub2:#45475a;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;
+  --orange:#fab387;--teal:#94e2d5;--mauve:#cba6f7;--sky:#74c7ec;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--text);
+  font-family:'Cascadia Code','JetBrains Mono','Fira Code','Courier New',monospace;font-size:13px}
+
+/* ─── HEADER ─────────────────────────────── */
+#hdr{display:flex;align-items:center;gap:8px;padding:5px 12px;
+  background:var(--bg0);border-bottom:1px solid var(--border);flex-shrink:0;height:38px;z-index:10}
+#logo{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--blue)}
+#logo em{color:var(--green);font-style:normal}
+.sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+#model-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sub)}
+select{background:var(--bg2);border:1px solid var(--border);color:var(--text);
+  padding:3px 7px;font-family:inherit;font-size:11px;border-radius:4px;cursor:pointer;outline:none}
+select:hover{border-color:var(--blue)}
+#hdr-right{display:flex;align-items:center;gap:6px;margin-left:auto}
+.btn{padding:4px 11px;font-family:inherit;font-size:11px;border:none;border-radius:4px;
+  cursor:pointer;letter-spacing:.5px;font-weight:600;transition:all .15s}
+#btn-run{background:var(--green);color:var(--bg0)}
+#btn-run:hover{filter:brightness(1.1)}
+#btn-stop{background:var(--red);color:var(--bg0);display:none}
+#btn-stop:hover{filter:brightness(1.1)}
+#btn-reset{background:var(--border);color:var(--text)}
+#btn-reset:hover{background:var(--sub2)}
+#dot{width:7px;height:7px;border-radius:50%;background:var(--sub2);transition:all .3s}
+#dot.live{background:var(--green);box-shadow:0 0 7px var(--green)}
+#dot.err{background:var(--red);box-shadow:0 0 7px var(--red)}
+#st{font-size:10px;color:var(--sub);letter-spacing:1px;min-width:52px}
+kbd-hint{font-size:9px;color:var(--sub2);margin-left:4px}
+
+/* ─── MAIN LAYOUT ─────────────────────────── */
+#main{display:flex;height:calc(100vh - 38px);overflow:hidden}
+
+/* ─── EDITOR PANEL ────────────────────────── */
+#epanel{display:flex;flex-direction:column;width:46%;min-width:220px;max-width:80%}
+#etabs{display:flex;align-items:center;background:var(--bg0);border-bottom:1px solid var(--border);
+  padding:0 8px;height:30px;flex-shrink:0;gap:2px}
+.tab{padding:4px 12px;font-size:11px;color:var(--sub);border-bottom:2px solid transparent;
+  cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+#ewrap{flex:1;overflow:hidden;position:relative}
+.CodeMirror{height:100%!important;font-size:12.5px!important;line-height:1.65!important;
+  font-family:inherit!important;background:var(--bg1)!important}
+.CodeMirror-scroll{height:100%!important}
+
+/* ─── SPLITTER ────────────────────────────── */
+#spl{width:4px;cursor:col-resize;background:var(--border);flex-shrink:0;transition:background .2s}
+#spl:hover,#spl.drag{background:var(--blue)}
+
+/* ─── SIM PANEL ───────────────────────────── */
+#spanel{flex:1;display:flex;flex-direction:column;min-width:0}
+#shdr{display:flex;align-items:center;padding:4px 10px;background:var(--bg0);
+  border-bottom:1px solid var(--border);height:30px;flex-shrink:0;gap:12px;font-size:10px;color:var(--sub);letter-spacing:1px}
+#hud{display:flex;gap:10px;margin-left:auto}
+.hi{display:flex;gap:3px}
+.hl{color:var(--sub2)}
+.hv{color:var(--blue);font-weight:600;min-width:35px}
+#cwrap{flex:1;overflow:hidden;position:relative;background:var(--bg0)}
+#cvs{display:block;width:100%;height:100%}
+
+/* ─── CONSOLE ─────────────────────────────── */
+#cpanel{height:145px;display:flex;flex-direction:column;border-top:1px solid var(--border);flex-shrink:0}
+#chdr{display:flex;align-items:center;padding:3px 10px;background:var(--bg0);
+  border-bottom:1px solid var(--bg1);font-size:10px;color:var(--sub);letter-spacing:1px;height:26px;flex-shrink:0}
+#chdr button{margin-left:auto;background:none;border:none;color:var(--sub2);font-family:inherit;
+  font-size:10px;cursor:pointer;padding:2px 6px}
+#chdr button:hover{color:var(--text)}
+#cout{flex:1;overflow-y:auto;padding:5px 10px;font-size:11.5px;line-height:1.7;background:var(--bg1)}
+#cout::-webkit-scrollbar{width:4px}
+#cout::-webkit-scrollbar-track{background:var(--bg1)}
+#cout::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.lo{color:var(--text)}.lc{color:var(--blue)}.ls{color:var(--green)}
+.le{color:var(--red)}.lw{color:var(--orange)}.li{color:var(--sky)}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <span id="logo">🚁 <em>DRONE</em>LAB PRO</span>
+  <div class="sep"></div>
+  <div id="model-wrap">
+    MODEL:
+    <select id="mdl">
+      <option value="quad">🚁 Quadcopter</option>
+      <option value="hex">🔷 Hexacopter</option>
+      <option value="octo">⚙️ Octocopter (X8)</option>
+      <option value="race">🏎️ Racing Drone</option>
+      <option value="delivery">📦 Delivery Drone</option>
+      <option value="wing">✈️ Fixed-Wing</option>
+    </select>
+  </div>
+  <div class="sep"></div>
+  <span style="font-size:10px;color:var(--sub)">Ctrl+Enter to Run</span>
+  <div id="hdr-right">
+    <div id="dot"></div><span id="st">READY</span>
+    <button class="btn" id="btn-run">▶  RUN</button>
+    <button class="btn" id="btn-stop">⛔  STOP</button>
+    <button class="btn" id="btn-reset">↺  RESET</button>
+  </div>
+</div>
+
+<div id="main">
+  <!-- EDITOR -->
+  <div id="epanel">
+    <div id="etabs"><div class="tab on">📄 mission.py</div></div>
+    <div id="ewrap"><textarea id="code"></textarea></div>
+  </div>
+
+  <div id="spl"></div>
+
+  <!-- SIMULATION -->
+  <div id="spanel">
+    <div id="shdr">
+      <span>SIMULATION · ISO 3D VIEW</span>
+      <div id="hud">
+        <div class="hi"><span class="hl">X</span><span class="hv" id="hx">0.0</span></div>
+        <div class="hi"><span class="hl">Y</span><span class="hv" id="hy">0.0</span></div>
+        <div class="hi"><span class="hl">ALT</span><span class="hv" id="hz">0.0m</span></div>
+        <div class="hi"><span class="hl">YAW</span><span class="hv" id="hyaw">0°</span></div>
+        <div class="hi"><span class="hl">SPD</span><span class="hv" id="hspd">1.0</span></div>
+        <div class="hi"><span class="hl">BAT</span><span class="hv" id="hbat" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+    <div id="cwrap"><canvas id="cvs"></canvas></div>
+    <div id="cpanel">
+      <div id="chdr">
+        <span>CONSOLE · Python output + flight log</span>
+        <button onclick="document.getElementById('cout').innerHTML=''">✕ CLEAR</button>
+      </div>
+      <div id="cout"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DEFAULT CODE
+// ══════════════════════════════════════════════════════════════
+const DEFAULT_CODE = `# 🚁 DroneLab Pro — Full Python + Drone SDK
+# Real Python: loops, functions, classes, math, random, time
+import math
+import random
+
+# ─── Basic Mission ────────────────────────────────────────
+set_model('quad')          # quad | hex | octo | race | delivery | wing
+set_speed(1.5)             # Flight speed multiplier (0.1 – 5.0)
+set_led(0, 255, 150)       # RGB LED color
+
+takeoff(5)                 # Lift off to 5 meters
+
+# ─── Functions work! ──────────────────────────────────────
+def square_mission(size):
+    for i in range(4):
+        forward(size)
+        rotate_cw(90)
+
+square_mission(3)
+
+# ─── Math & conditionals ──────────────────────────────────
+alt = get_altitude()
+if alt > 3:
+    print(f"Flying high at {alt:.1f}m!")
+
+# ─── Spiral ascent ────────────────────────────────────────
+spiral(radius=2, height=4, turns=2)
+
+# ─── Orbit a point ────────────────────────────────────────
+go_to(3, 0, 5)
+orbit(cx=3, cy=0, radius=2, laps=1)
+
+# ─── Advanced maneuvers ───────────────────────────────────
+go_to(0, 0, 5)
+flip('forward')
+hover(1)
+
+# ─── Patrol waypoints ─────────────────────────────────────
+waypoints = [(2,2,4), (-2,2,4), (-2,-2,4), (2,-2,4)]
+patrol(waypoints)
+
+go_to(0, 0, 3)
+land()
+print("✅ Mission complete!")
+`;
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let canvas, ctx;
+let rafId;
+let running = false;
+let missionDone = false;
+let shouldStop = false;
+let frameN = 0;
+
+// Planned state (written by Python, read by sensor getters)
+let P = { x:0, y:0, z:0, yaw:0, spd:1, flying:false, led:'#89b4fa', model:'quad', battery:100 };
+
+// Current animated state (interpolated for rendering)
+let C = { x:0, y:0, z:0, yaw:0, spd:1, flying:false, led:'#89b4fa', model:'quad', flipAngle:0, battery:100 };
+
+let trail = [];
+let cmdQueue = [];
+let animQueue = [];
+let curAnim = null;
+let animT0 = 0;
+let animFrom = null;
+
+// ══════════════════════════════════════════════════════════════
+// ISO PROJECTION
+// ══════════════════════════════════════════════════════════════
+const CELL = 27, ZS = 34;
+function proj(x, y, z) {
+  const W = canvas.width, H = canvas.height;
+  return {
+    sx: W/2 + (x - y) * CELL,
+    sy: H * 0.57 + (x + y) * CELL * 0.5 - z * ZS
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONSOLE
+// ══════════════════════════════════════════════════════════════
+const cout = document.getElementById('cout');
+function clog(msg, cls='lo') {
+  const s = document.createElement('span');
+  s.className = cls;
+  s.textContent = msg;
+  s.style.display = 'block';
+  s.style.whiteSpace = 'pre-wrap';
+  cout.appendChild(s);
+  cout.scrollTop = 9999;
+}
+
+// ══════════════════════════════════════════════════════════════
+// QUEUE HELPERS
+// ══════════════════════════════════════════════════════════════
+function qmove(tx, ty, tz, tyaw, log, fast=false) {
+  const d = Math.hypot(tx-P.x, ty-P.y, tz-P.z);
+  const dy = Math.abs(tyaw-P.yaw);
+  const dur = fast ? Math.max(60, d*120/P.spd) : Math.max(350, (d*420 + dy*7)/P.spd);
+  cmdQueue.push({ t:'move', tx, ty, tz, tyaw, dur, log, fast });
+  P.x=tx; P.y=ty; P.z=tz; P.yaw=tyaw;
+}
+
+function qrotate(tyaw, log) {
+  const d = Math.abs(tyaw - P.yaw);
+  cmdQueue.push({ t:'rotate', tx:P.x, ty:P.y, tz:P.z, tyaw, dur: Math.max(250, d*9/P.spd), log });
+  P.yaw = tyaw;
+}
+
+function qhover(ms, log) { cmdQueue.push({ t:'hover', dur:ms, log }); }
+
+function qflip(dir) { cmdQueue.push({ t:'flip', dir, dur:700, log:`🤸 flip('${dir}')` }); }
+
+function qinstant(type, data) { cmdQueue.push({ t:'instant', type, ...data }); }
+
+// ══════════════════════════════════════════════════════════════
+// SKULPT SETUP
+// ══════════════════════════════════════════════════════════════
+function N(v, def=0) { return v!=null ? Sk.ffi.remapToJs(v) : def; }
+function S(v, def='') { return v!=null ? Sk.ffi.remapToJs(v) : def; }
+function sk(fn) { return new Sk.builtin.func(fn); }
+
+function setupBuiltins() {
+  const b = Sk.builtins;
+
+  // ── BASIC FLIGHT ──────────────────────────────────────────
+  b.takeoff = sk((alt) => {
+    const a = N(alt, 3);
+    if (P.flying) { clog('⚠ Already airborne!','lw'); return Sk.builtin.none.none$; }
+    P.flying = true;
+    qmove(P.x, P.y, Math.max(0.1,a), P.yaw, `🚀 takeoff(${a}) → ${a}m altitude`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.land = sk(() => {
+    if (!P.flying) { clog('⚠ Already landed!','lw'); return Sk.builtin.none.none$; }
+    qmove(P.x, P.y, 0, P.yaw, `🛬 land() → descending`);
+    P.flying = false;
+    return Sk.builtin.none.none$;
+  });
+
+  b.hover = sk((secs) => {
+    const s = N(secs, 1);
+    qhover(s*1000, `⏸ hover(${s}s)`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.emergency_stop = sk(() => {
+    clog('🚨 EMERGENCY STOP','le');
+    shouldStop = true;
+    return Sk.builtin.none.none$;
+  });
+
+  // ── DIRECTIONAL MOVEMENT ──────────────────────────────────
+  b.forward = sk((d,spd) => {
+    const dist=N(d,1); if(spd) P.spd=Math.max(.1,Math.min(5,N(spd,P.spd)));
+    const r=P.yaw*Math.PI/180;
+    qmove(P.x+Math.sin(r)*dist, P.y+Math.cos(r)*dist, P.z, P.yaw, `⬆ forward(${dist})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.backward = sk((d) => {
+    const dist=N(d,1); const r=P.yaw*Math.PI/180;
+    qmove(P.x-Math.sin(r)*dist, P.y-Math.cos(r)*dist, P.z, P.yaw, `⬇ backward(${dist})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.left = sk((d) => {
+    const dist=N(d,1); const r=P.yaw*Math.PI/180;
+    qmove(P.x-Math.cos(r)*dist, P.y+Math.sin(r)*dist, P.z, P.yaw, `← left(${dist})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.right = sk((d) => {
+    const dist=N(d,1); const r=P.yaw*Math.PI/180;
+    qmove(P.x+Math.cos(r)*dist, P.y-Math.sin(r)*dist, P.z, P.yaw, `→ right(${dist})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.up = sk((d) => {
+    const dist=N(d,1);
+    qmove(P.x, P.y, P.z+dist, P.yaw, `↑ up(${dist})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.down = sk((d) => {
+    const dist=N(d,1);
+    qmove(P.x, P.y, Math.max(0,P.z-dist), P.yaw, `↓ down(${dist})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.go_to = sk((x,y,z) => {
+    const tx=N(x,P.x), ty=N(y,P.y), tz=N(z,P.z);
+    qmove(tx, ty, tz, P.yaw, `📍 go_to(${tx.toFixed(1)}, ${ty.toFixed(1)}, ${tz.toFixed(1)})`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.move_to = b.go_to; // alias
+
+  // ── ROTATION ─────────────────────────────────────────────
+  b.rotate_cw = sk((deg) => { const d=N(deg,90); qrotate(P.yaw+d, `↻ rotate_cw(${d}°)`); return Sk.builtin.none.none$; });
+  b.rotate_ccw = sk((deg) => { const d=N(deg,90); qrotate(P.yaw-d, `↺ rotate_ccw(${d}°)`); return Sk.builtin.none.none$; });
+  b.set_yaw = sk((a) => { qrotate(N(a,0), `🧭 set_yaw(${N(a,0)}°)`); return Sk.builtin.none.none$; });
+  b.face_north = sk(() => { qrotate(0,'🧭 face_north()'); return Sk.builtin.none.none$; });
+  b.face_east  = sk(() => { qrotate(90,'🧭 face_east()'); return Sk.builtin.none.none$; });
+  b.face_south = sk(() => { qrotate(180,'🧭 face_south()'); return Sk.builtin.none.none$; });
+  b.face_west  = sk(() => { qrotate(270,'🧭 face_west()'); return Sk.builtin.none.none$; });
+  b.face = sk((dir) => {
+    const d = S(dir,'north');
+    const a = {north:0,east:90,south:180,west:270}[d]??0;
+    qrotate(a, `🧭 face('${d}')`);
+    return Sk.builtin.none.none$;
+  });
+
+  // ── FLIPS ────────────────────────────────────────────────
+  b.flip = sk((dir) => { qflip(S(dir,'forward')); return Sk.builtin.none.none$; });
+  b.flip_forward  = sk(() => { qflip('forward'); return Sk.builtin.none.none$; });
+  b.flip_backward = sk(() => { qflip('backward'); return Sk.builtin.none.none$; });
+  b.flip_left     = sk(() => { qflip('left'); return Sk.builtin.none.none$; });
+  b.flip_right    = sk(() => { qflip('right'); return Sk.builtin.none.none$; });
+
+  // ── SPEED & SETTINGS ─────────────────────────────────────
+  b.set_speed = sk((spd) => {
+    P.spd = Math.max(.1, Math.min(5, N(spd,1)));
+    clog(`⚡ set_speed(${P.spd.toFixed(1)})`, 'li');
+    return Sk.builtin.none.none$;
+  });
+
+  b.set_led = sk((r,g,bl) => {
+    const col = `rgb(${N(r,0)},${N(g,255)},${N(bl,157)})`;
+    qinstant('led', { color: col });
+    P.led = col;
+    return Sk.builtin.none.none$;
+  });
+
+  b.set_model = sk((m) => {
+    const model = S(m,'quad');
+    qinstant('model', { model });
+    P.model = model;
+    document.getElementById('mdl').value = model;
+    return Sk.builtin.none.none$;
+  });
+
+  // ── ADVANCED PATTERNS ─────────────────────────────────────
+  b.orbit = sk((cx, cy, radius, laps, dir) => {
+    const ocx=N(cx,0), ocy=N(cy,0), r=N(radius,2), l=N(laps,1);
+    const d = (dir && S(dir))==='ccw' ? -1 : 1;
+    const steps = Math.ceil(36*l);
+    clog(`🔵 orbit(cx=${ocx}, cy=${ocy}, r=${r}, laps=${l})`, 'li');
+    for (let i=1; i<=steps; i++) {
+      const ang = d*(i/36)*Math.PI*2;
+      qmove(ocx+r*Math.cos(ang), ocy+r*Math.sin(ang), P.z, P.yaw, null, true);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.circle = sk((radius, laps) => {
+    const r=N(radius,2), l=N(laps,1);
+    const steps = Math.ceil(36*l);
+    const sx=P.x, sy=P.y;
+    clog(`⭕ circle(r=${r}, laps=${l})`, 'li');
+    for (let i=1; i<=steps; i++) {
+      const ang = (i/36)*Math.PI*2;
+      qmove(sx+r*Math.sin(ang), sy+r-r*Math.cos(ang), P.z, P.yaw, null, true);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.spiral = sk((radius, height, turns) => {
+    const r=N(radius,3), h=N(height,5), t=N(turns,3);
+    const steps = Math.ceil(36*t);
+    clog(`🌀 spiral(r=${r}, h=${h}, turns=${t})`, 'li');
+    for (let i=1; i<=steps; i++) {
+      const ang = (i/36)*Math.PI*2;
+      const frac = i/steps;
+      qmove(P.x+r*Math.cos(ang), P.y+r*Math.sin(ang), P.z+h*frac, P.yaw, null, true);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.figure_8 = sk((size) => {
+    const s=N(size,3);
+    const cx=P.x, cy=P.y;
+    clog(`∞ figure_8(size=${s})`, 'li');
+    for (let i=1; i<=36; i++) {
+      const a=(i/36)*Math.PI*2;
+      qmove(cx+s*Math.sin(a), cy+s*Math.sin(a)*Math.cos(a), P.z, P.yaw, null, true);
+    }
+    for (let i=1; i<=36; i++) {
+      const a=(i/36)*Math.PI*2;
+      qmove(cx-s*Math.sin(a), cy+s*Math.sin(a)*Math.cos(a), P.z, P.yaw, null, true);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.square = sk((size) => {
+    const s=N(size,2);
+    clog(`⬛ square(${s})`, 'li');
+    for (let i=0; i<4; i++) {
+      const r=P.yaw*Math.PI/180;
+      qmove(P.x+Math.sin(r)*s, P.y+Math.cos(r)*s, P.z, P.yaw, `⬛ → side ${i+1}`);
+      qrotate(P.yaw+90, null);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.triangle = sk((size) => {
+    const s=N(size,2);
+    clog(`▲ triangle(${s})`, 'li');
+    for (let i=0; i<3; i++) {
+      const r=P.yaw*Math.PI/180;
+      qmove(P.x+Math.sin(r)*s, P.y+Math.cos(r)*s, P.z, P.yaw, `▲ → side ${i+1}`);
+      qrotate(P.yaw+120, null);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.zigzag = sk((width, dist, steps) => {
+    const w=N(width,2), d=N(dist,5), n=N(steps,5);
+    clog(`↯ zigzag(w=${w}, d=${d}, steps=${n})`, 'li');
+    for (let i=0; i<n; i++) {
+      const r=P.yaw*Math.PI/180;
+      const side = i%2===0 ? w : -w;
+      const cos_r=Math.cos(r), sin_r=Math.sin(r);
+      const step = d/n;
+      qmove(P.x+sin_r*step+cos_r*side, P.y+cos_r*step-sin_r*side, P.z, P.yaw, null);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.patrol = sk((wps) => {
+    const wpList = Sk.ffi.remapToJs(wps);
+    clog(`🗺 patrol(${wpList.length} waypoints)`, 'li');
+    for (const wp of wpList) {
+      const arr = Array.isArray(wp) ? wp : Object.values(wp);
+      const tx = +arr[0]||0, ty = +arr[1]||0, tz = arr[2]!=null ? +arr[2] : P.z;
+      qmove(tx, ty, tz, P.yaw, `  📍 → (${tx}, ${ty}, ${tz.toFixed(1)})`);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.lawnmower = sk((width, length, rows) => {
+    const w=N(width,8), l=N(length,6), r=N(rows,4);
+    clog(`🌿 lawnmower(${w}x${l}, ${r} rows)`, 'li');
+    const rowSpacing = w / r;
+    for (let i=0; i<=r; i++) {
+      const x = -w/2 + i*rowSpacing;
+      qmove(x, P.y, P.z, P.yaw, null);
+      qmove(x, P.y+(i%2===0?l:-l), P.z, P.yaw, null);
+    }
+    return Sk.builtin.none.none$;
+  });
+
+  b.return_home = sk(() => {
+    qmove(0, 0, P.z, P.yaw, `🏠 return_home()`);
+    return Sk.builtin.none.none$;
+  });
+
+  b.take_photo = sk(() => {
+    qinstant('photo', {});
+    clog('📸 take_photo() — snapshot!', 'li');
+    return Sk.builtin.none.none$;
+  });
+
+  // ── SENSOR GETTERS (instant, no queue) ───────────────────
+  b.get_position  = sk(() => Sk.ffi.remapToPy([P.x, P.y, P.z]));
+  b.get_x         = sk(() => Sk.ffi.remapToPy(+P.x.toFixed(3)));
+  b.get_y         = sk(() => Sk.ffi.remapToPy(+P.y.toFixed(3)));
+  b.get_altitude  = sk(() => Sk.ffi.remapToPy(+P.z.toFixed(3)));
+  b.get_yaw       = sk(() => Sk.ffi.remapToPy(+P.yaw.toFixed(1)));
+  b.get_speed     = sk(() => Sk.ffi.remapToPy(P.spd));
+  b.get_battery   = sk(() => Sk.ffi.remapToPy(P.battery));
+  b.get_model     = sk(() => Sk.ffi.remapToPy(P.model));
+  b.is_flying     = sk(() => P.flying ? Sk.builtin.bool.true$ : Sk.builtin.bool.false$);
+  b.distance_to   = sk((x,y,z) => Sk.ffi.remapToPy(Math.hypot(N(x)-P.x, N(y)-P.y, N(z)-P.z)));
+
+  // ── LOG ───────────────────────────────────────────────────
+  b.log = b.log_msg = sk((msg) => { clog(Sk.ffi.remapToJs(msg),'lo'); return Sk.builtin.none.none$; });
+}
+
+// ══════════════════════════════════════════════════════════════
+// SKULPT READER (module importer)
+// ══════════════════════════════════════════════════════════════
+function builtinRead(x) {
+  // Override time.sleep → hover
+  if (x.endsWith('/time.js')) return `def sleep(secs):\n    hover(secs)\n`;
+  if (Sk.builtinFiles && Sk.builtinFiles['files'][x] !== undefined)
+    return Sk.builtinFiles['files'][x];
+  throw new Error("Module not found: '" + x + "'");
+}
+
+// ══════════════════════════════════════════════════════════════
+// RUN PYTHON
+// ══════════════════════════════════════════════════════════════
+function runPython(code) {
+  cmdQueue = [];
+  P = { x:0, y:0, z:0, yaw:0, spd:1, flying:false, led:'#89b4fa', model:document.getElementById('mdl').value, battery:100 };
+
+  Sk.configure({
+    output: (txt) => {
+      const lines = txt.split('\n');
+      for (const l of lines) if(l.trim()) clog(l, 'lo');
+    },
+    read: builtinRead,
+    __future__: Sk.python3,
+    execLimit: 60000,
+  });
+
+  setupBuiltins();
+
+  const promise = Sk.misceval.asyncToPromise(() =>
+    Sk.importMainWithBody('<stdin>', false, code, true)
+  );
+
+  promise.then(() => {
+    clog('', 'lo');
+    clog(`▸ Script done — ${cmdQueue.length} command(s) in queue`, 'ls');
+    beginAnimation();
+  }).catch((err) => {
+    clog('', 'le');
+    clog('❌ ' + (err.tp$str ? err.tp$str().v : err.toString()), 'le');
+    setRunning(false);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// ANIMATION ENGINE
+// ══════════════════════════════════════════════════════════════
+function ease(t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function beginAnimation() {
+  animQueue = [...cmdQueue];
+  curAnim = null;
+  missionDone = false;
+  trail = [];
+  C = { x:0, y:0, z:0, yaw:0, spd:P.spd, flying:false, led:P.led||'#89b4fa',
+        model:document.getElementById('mdl').value, flipAngle:0, battery:100 };
+}
+
+let batDrain = 0;
+function tick(ts) {
+  if (!running || missionDone) return;
+  if (shouldStop) { animQueue=[]; curAnim=null; return; }
+
+  // Mission complete?
+  if (!curAnim && animQueue.length===0) {
+    if (!missionDone) {
+      missionDone = true;
+      clog('', 'ls');
+      clog('✅ Mission complete! Drone safe.', 'ls');
+      setRunning(false);
+    }
+    return;
+  }
+
+  // Advance to next command
+  if (!curAnim) {
+    curAnim = animQueue.shift();
+    animT0 = ts;
+    animFrom = { x:C.x, y:C.y, z:C.z, yaw:C.yaw };
+
+    // Handle instant commands
+    while (curAnim && curAnim.t==='instant') {
+      if (curAnim.type==='led') C.led = curAnim.color;
+      if (curAnim.type==='model') { C.model = curAnim.model; }
+      if (curAnim.type==='photo') {
+        // Flash effect
+        flashTimer = 5;
+      }
+      curAnim = animQueue.length ? animQueue.shift() : null;
+      if (curAnim) { animT0=ts; animFrom={x:C.x,y:C.y,z:C.z,yaw:C.yaw}; }
+    }
+    if (!curAnim) return;
+    if (curAnim.log) clog(curAnim.log, 'lc');
+  }
+
+  const elapsed = ts - animT0;
+  const t = Math.min(elapsed / Math.max(1, curAnim.dur), 1);
+  const e = curAnim.fast ? t : ease(t);
+
+  if (curAnim.t==='move' || curAnim.t==='rotate') {
+    C.x = animFrom.x + (curAnim.tx - animFrom.x) * e;
+    C.y = animFrom.y + (curAnim.ty - animFrom.y) * e;
+    C.z = animFrom.z + (curAnim.tz - animFrom.z) * e;
+    C.yaw = animFrom.yaw + (curAnim.tyaw - animFrom.yaw) * e;
+  } else if (curAnim.t==='flip') {
+    C.flipAngle = e * 360;
+  }
+  // hover: just wait
+
+  if (t >= 1) {
+    if (curAnim.t==='move'||curAnim.t==='rotate') {
+      C.x=curAnim.tx; C.y=curAnim.ty; C.z=curAnim.tz; C.yaw=curAnim.tyaw;
+    }
+    C.flipAngle = 0;
+    // Battery drain
+    if (curAnim.t==='move') { batDrain+=.4; C.battery=Math.max(0,100-batDrain); }
+    curAnim = null;
+  }
+
+  // Trail
+  if (C.z > 0.05) {
+    const last = trail[trail.length-1];
+    if (!last || Math.hypot(C.x-last.x, C.y-last.y, C.z-last.z) > 0.04) {
+      trail.push({x:C.x, y:C.y, z:C.z});
+      if (trail.length>600) trail.shift();
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDERING
+// ══════════════════════════════════════════════════════════════
+let flashTimer = 0;
+
+function drawScene(ts) {
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#11111b'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  const GR = 7;
+  for (let i=-GR; i<=GR; i++) {
+    [[i,-GR,i,GR],[-GR,i,GR,i]].forEach(([ax,ay,bx,by]) => {
+      const p1=proj(ax,ay,0), p2=proj(bx,by,0);
+      ctx.beginPath(); ctx.moveTo(p1.sx,p1.sy); ctx.lineTo(p2.sx,p2.sy);
+      ctx.strokeStyle=i===0?'#2a2a3f':'#181824';
+      ctx.lineWidth=i===0?1.2:.5; ctx.stroke();
+    });
+  }
+
+  // Grid border
+  const corners=[[-GR,-GR],[GR,-GR],[GR,GR],[-GR,GR]].map(([x,y])=>proj(x,y,0));
+  ctx.beginPath(); corners.forEach((p,i)=>i?ctx.lineTo(p.sx,p.sy):ctx.moveTo(p.sx,p.sy));
+  ctx.closePath(); ctx.strokeStyle='#2a2a4f'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Axes
+  const O=proj(0,0,0);
+  [[proj(3.5,0,0),'#f38ba8','X'],[proj(0,3.5,0),'#a6e3a1','Y'],[proj(0,0,3.5),'#89b4fa','Z']].forEach(([P2,col,lbl])=>{
+    ctx.beginPath(); ctx.moveTo(O.sx,O.sy); ctx.lineTo(P2.sx,P2.sy);
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle=col; ctx.font='10px Courier New'; ctx.fillText(lbl,P2.sx+3,P2.sy+3);
+  });
+
+  // Trail
+  for (let i=1;i<trail.length;i++) {
+    const a=proj(trail[i-1].x,trail[i-1].y,trail[i-1].z);
+    const b=proj(trail[i].x,trail[i].y,trail[i].z);
+    ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy);
+    ctx.strokeStyle=`rgba(137,180,250,${.06+.45*(i/trail.length)})`;
+    ctx.lineWidth=1.5; ctx.stroke();
+  }
+
+  // Draw drone
+  const pos=proj(C.x,C.y,C.z);
+  const shd=proj(C.x,C.y,0);
+  drawDrone(pos, shd, ts);
+
+  // Photo flash
+  if (flashTimer>0) {
+    ctx.fillStyle=`rgba(255,255,255,${flashTimer*0.04})`;
+    ctx.fillRect(0,0,W,H);
+    flashTimer--;
+  }
+
+  // Compass
+  drawCompass(W-46, 44, C.yaw);
+
+  // HUD update
+  if (frameN%8===0) {
+    document.getElementById('hx').textContent = C.x.toFixed(1);
+    document.getElementById('hy').textContent = C.y.toFixed(1);
+    document.getElementById('hz').textContent = C.z.toFixed(1)+'m';
+    document.getElementById('hyaw').textContent = ((C.yaw%360+360)%360).toFixed(0)+'°';
+    document.getElementById('hspd').textContent = C.spd ? C.spd.toFixed(1) : P.spd.toFixed(1);
+    const bat = Math.round(C.battery||100);
+    const batEl = document.getElementById('hbat');
+    batEl.textContent = bat+'%';
+    batEl.style.color = bat>50?'var(--green)':bat>20?'var(--yellow)':'var(--red)';
+  }
+}
+
+function drawDrone(pos, shd, ts) {
+  const model = C.model;
+  const led = C.led || '#89b4fa';
+  const spin = ts * 0.022;
+  const yawRad = C.yaw * Math.PI / 180;
+  const flipRad = C.flipAngle * Math.PI / 180;
+
+  // Shadow
+  if (C.z > 0.05) {
+    const falloff = Math.max(0.05, .45 - C.z*.03);
+    ctx.beginPath();
+    ctx.ellipse(shd.sx, shd.sy, Math.max(3,13-C.z*.4), Math.max(1.5,6.5-C.z*.2), 0, 0, Math.PI*2);
+    ctx.fillStyle=`rgba(0,0,0,${falloff})`; ctx.fill();
+    // Altitude wire
+    ctx.beginPath(); ctx.moveTo(pos.sx,pos.sy); ctx.lineTo(shd.sx,shd.sy);
+    ctx.setLineDash([2,5]); ctx.strokeStyle='rgba(137,180,250,.12)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.save();
+  ctx.translate(pos.sx, pos.sy);
+  // Flip effect: squish Y-axis
+  if (C.flipAngle>0) ctx.scale(1, Math.cos(flipRad));
+
+  if (model==='wing') {
+    drawFixedWing(ts, led, yawRad);
+  } else {
+    // Multi-rotor variants
+    const cfg = {
+      quad:     { arms:4, armLen:14, baseAngle:45, bodyR:7,  col:'#89b4fa', armW:2.5 },
+      hex:      { arms:6, armLen:13, baseAngle:30, bodyR:8,  col:'#cba6f7', armW:2 },
+      octo:     { arms:8, armLen:12, baseAngle:22, bodyR:9,  col:'#94e2d5', armW:2 },
+      race:     { arms:4, armLen:10, baseAngle:30, bodyR:5,  col:'#f38ba8', armW:3 },
+      delivery: { arms:4, armLen:16, baseAngle:45, bodyR:7,  col:'#fab387', armW:2.5 },
+    }[model] || { arms:4, armLen:14, baseAngle:45, bodyR:7, col:'#89b4fa', armW:2.5 };
+
+    const baseAng = (yawRad*180/Math.PI + cfg.baseAngle)*Math.PI/180;
+
+    // Arms + props
+    for (let i=0; i<cfg.arms; i++) {
+      const ang = baseAng + i*(Math.PI*2/cfg.arms);
+      const ax = Math.cos(ang)*cfg.armLen;
+      const ay = Math.sin(ang)*cfg.armLen*.5;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(ax,ay);
+      ctx.strokeStyle=cfg.col; ctx.lineWidth=cfg.armW; ctx.stroke();
+      // Propeller
+      ctx.beginPath();
+      ctx.ellipse(ax, ay, 7.5, 3.5, ang+spin, 0, Math.PI*2);
+      ctx.strokeStyle=cfg.col+'99'; ctx.lineWidth=1.8; ctx.stroke();
+      ctx.beginPath(); ctx.arc(ax,ay,1.8,0,Math.PI*2); ctx.fillStyle=led; ctx.fill();
+    }
+
+    // Delivery box
+    if (model==='delivery' && C.z>.1) {
+      ctx.fillStyle='#45475a'; ctx.fillRect(-8,5,16,10);
+      ctx.strokeStyle='#89b4fa'; ctx.lineWidth=.7; ctx.strokeRect(-8,5,16,10);
+      ctx.fillStyle='#585b70'; ctx.fillRect(-5,7,10,6);
+    }
+
+    // Body
+    ctx.beginPath(); ctx.arc(0,0,cfg.bodyR,0,Math.PI*2);
+    ctx.fillStyle=model==='race'?'#1e1e2e':'#11111b'; ctx.fill();
+    ctx.strokeStyle=cfg.col; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,3.8,0,Math.PI*2); ctx.fillStyle=led; ctx.fill();
+
+    // LED blink
+    if (C.z>.05 && Math.floor(ts/450)%2===0) {
+      ctx.beginPath(); ctx.arc(0,cfg.bodyR-1,2,0,Math.PI*2);
+      ctx.fillStyle='#f38ba8'; ctx.shadowBlur=7; ctx.shadowColor='#f38ba8';
+      ctx.fill(); ctx.shadowBlur=0;
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawFixedWing(ts, led, yawRad) {
+  // Fuselage
+  ctx.beginPath();
+  ctx.ellipse(0,0,18,4.5,0,0,Math.PI*2);
+  ctx.fillStyle='#313244'; ctx.fill(); ctx.strokeStyle='#89b4fa'; ctx.lineWidth=1; ctx.stroke();
+  // Wings
+  ctx.beginPath();
+  ctx.moveTo(-2,0); ctx.lineTo(-22,-4); ctx.lineTo(-24,0); ctx.lineTo(-22,4); ctx.closePath();
+  ctx.moveTo(-2,0); ctx.lineTo(16,-4); ctx.lineTo(18,0); ctx.lineTo(16,4); ctx.closePath();
+  ctx.fillStyle='#45475a'; ctx.fill(); ctx.strokeStyle='#74c7ec'; ctx.lineWidth=.8; ctx.stroke();
+  // Tail
+  ctx.beginPath(); ctx.moveTo(-14,0); ctx.lineTo(-20,-6); ctx.lineTo(-20,6); ctx.closePath();
+  ctx.fillStyle='#45475a'; ctx.fill();
+  // Nose LED
+  ctx.beginPath(); ctx.arc(18,0,2,0,Math.PI*2); ctx.fillStyle=led; ctx.fill();
+}
+
+function drawCompass(x, y, yaw) {
+  ctx.save(); ctx.translate(x,y);
+  ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2);
+  ctx.fillStyle='#11111b'; ctx.fill(); ctx.strokeStyle='#313244'; ctx.lineWidth=1; ctx.stroke();
+  [['N',0,'#f38ba8'],['E',90,'#585b70'],['S',180,'#585b70'],['W',270,'#585b70']].forEach(([l,a,c])=>{
+    const r=a*Math.PI/180;
+    ctx.fillStyle=c; ctx.font='8px Courier New'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(l, Math.sin(r)*15, -Math.cos(r)*15);
+  });
+  const nr=yaw*Math.PI/180;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.sin(nr)*16,-Math.cos(nr)*16);
+  ctx.strokeStyle='#89b4fa'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke();
+  ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fillStyle='#89b4fa'; ctx.fill();
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+// MAIN LOOP
+// ══════════════════════════════════════════════════════════════
+function loop(ts) {
+  frameN++;
+  tick(ts);
+  drawScene(ts);
+  rafId = requestAnimationFrame(loop);
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI
+// ══════════════════════════════════════════════════════════════
+function setRunning(r) {
+  running = r;
+  document.getElementById('btn-run').style.display = r?'none':'';
+  document.getElementById('btn-stop').style.display = r?'':'none';
+  const dot = document.getElementById('dot');
+  dot.className = r?'live':'';
+  document.getElementById('st').textContent = r?'FLYING':'READY';
+}
+
+function resetAll() {
+  shouldStop=true; running=false; missionDone=true;
+  animQueue=[]; curAnim=null; trail=[];
+  batDrain=0; flashTimer=0;
+  C={ x:0,y:0,z:0,yaw:0,spd:1,flying:false,led:'#89b4fa',model:document.getElementById('mdl').value,flipAngle:0,battery:100 };
+  setRunning(false);
+}
+
+document.getElementById('btn-run').onclick = () => {
+  if (running) return;
+  resetAll();
+  shouldStop=false; missionDone=false;
+  cout.innerHTML='';
+  clog('▸ Executing mission.py...','li');
+  batDrain=0;
+  setRunning(true);
+  runPython(editor.getValue());
+};
+
+document.getElementById('btn-stop').onclick = () => {
+  shouldStop=true; animQueue=[]; curAnim=null;
+  clog('⛔ Stopped.','lw'); setRunning(false);
+};
+
+document.getElementById('btn-reset').onclick = () => {
+  resetAll(); cout.innerHTML=''; clog('↺ Reset complete.','li');
+};
+
+document.getElementById('mdl').onchange = e => { C.model=e.target.value; };
+
+// ══════════════════════════════════════════════════════════════
+// CANVAS RESIZE
+// ══════════════════════════════════════════════════════════════
+function resize() {
+  const w=document.getElementById('cwrap');
+  canvas.width=w.clientWidth; canvas.height=w.clientHeight;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPLITTER (drag)
+// ══════════════════════════════════════════════════════════════
+const spl=document.getElementById('spl');
+const ep=document.getElementById('epanel');
+let dragging=false;
+spl.addEventListener('mousedown',e=>{ dragging=true; spl.classList.add('drag'); e.preventDefault(); });
+document.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  const rect=document.getElementById('main').getBoundingClientRect();
+  const pct=Math.min(75,Math.max(20,(e.clientX-rect.left)/rect.width*100));
+  ep.style.width=pct+'%'; resize();
+});
+document.addEventListener('mouseup',()=>{ dragging=false; spl.classList.remove('drag'); });
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+canvas = document.getElementById('cvs');
+ctx = canvas.getContext('2d');
+
+const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+  mode:'python', theme:'dracula',
+  lineNumbers:true, autoCloseBrackets:true, matchBrackets:true,
+  indentUnit:4, tabSize:4, indentWithTabs:false, lineWrapping:false,
+  extraKeys:{
+    'Tab': cm => cm.execCommand('indentMore'),
+    'Shift-Tab': cm => cm.execCommand('indentLess'),
+    'Ctrl-Enter': () => document.getElementById('btn-run').click(),
+    'Cmd-Enter': () => document.getElementById('btn-run').click(),
+    'Ctrl-/': cm => cm.execCommand('toggleComment'),
+  }
+});
+editor.setValue(DEFAULT_CODE);
+
+// Fix CodeMirror height
+editor.setSize('100%','100%');
+
+resize();
+window.addEventListener('resize', resize);
+clog('🚁 DroneLab Pro loaded. Press ▶ RUN to start.','li');
+clog('   Full Python: loops, functions, classes, math, random','li');
+clog('   Ctrl+Enter to run · Ctrl+/ to comment','li');
+rafId = requestAnimationFrame(loop);
+</script>
+</body>
+</html>
