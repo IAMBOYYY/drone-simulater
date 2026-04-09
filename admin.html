@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vectra Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#080c12; --surface:#0e1420; --card:#121926;
+    --border:#1e2d40; --accent:#00d4ff; --accent2:#0077ff;
+    --text:#e8edf5; --muted:#6b7a92; --green:#22c55e;
+    --red:#ef4444; --gold:#f0c040; --radius:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px 32px;width:100%;max-width:360px;text-align:center;}
+  .login-icon{font-size:40px;margin-bottom:16px;}
+  .login-box h2{font-family:'Rajdhani',sans-serif;font-size:24px;margin-bottom:6px;}
+  .login-box p{color:var(--muted);font-size:13px;margin-bottom:28px;}
+  .login-box input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:12px;transition:border-color .2s;}
+  .login-box input:focus{border-color:var(--accent);}
+  .btn-primary{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:8px;padding:13px;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;}
+  .error-msg{color:var(--red);font-size:13px;margin-top:10px;}
+
+  #adminApp{display:none;}
+  header{background:rgba(8,12,18,.95);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(16px);}
+  .logo-wrap{display:flex;align-items:center;gap:10px;}
+  .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent2),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .logo-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:17px;}
+  .logo-sub{font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .badge-count{background:var(--accent);color:#000;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;}
+  .btn-logout{background:none;border:1px solid var(--border);border-radius:7px;padding:7px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+  .main{max-width:1100px;margin:0 auto;padding:24px 16px 60px;}
+
+  #setupBanner{background:linear-gradient(135deg,rgba(0,119,255,.12),rgba(0,212,255,.08));border:1px solid rgba(0,212,255,.25);border-radius:12px;padding:20px;margin-bottom:24px;}
+  #setupBanner h3{font-size:15px;margin-bottom:12px;color:var(--accent);}
+  .setup-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:500px){.setup-fields{grid-template-columns:1fr;}}
+  #setupBanner input{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%;}
+  #setupBanner input:focus{border-color:var(--accent);}
+  .setup-hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;}
+  .btn-save-setup{margin-top:12px;background:var(--accent2);border:none;border-radius:7px;padding:10px 20px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+  .tab{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:all .2s;}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
+
+  #addTab,#listTab,#catsTab{display:none;}
+  #addTab.visible,#listTab.visible,#catsTab.visible{display:block;}
+
+  .form-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;}
+  .form-card h3{font-family:'Rajdhani',sans-serif;font-size:20px;margin-bottom:20px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  @media(max-width:540px){.form-row{grid-template-columns:1fr;}}
+  .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .form-group label{font-size:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;font-weight:500;}
+  .form-group input,.form-group select,.form-group textarea{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+  .form-group textarea{resize:vertical;min-height:80px;}
+  .form-group select option{background:var(--card);}
+
+  .img-upload-area{border:2px dashed var(--border);border-radius:10px;padding:30px 20px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative;}
+  .img-upload-area:hover{border-color:var(--accent);}
+  .img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;background:none;border:none;padding:0;}
+  .upload-icon{font-size:36px;margin-bottom:8px;}
+  .upload-text{color:var(--muted);font-size:13px;}
+  .upload-text strong{color:var(--accent);}
+  .img-preview-add{max-width:100%;max-height:180px;border-radius:8px;margin-top:12px;display:none;}
+
+  .btn-submit{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:9px;padding:14px;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+  .btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+
+  .status-msg{border-radius:8px;padding:12px 16px;font-size:14px;margin-top:14px;display:none;text-align:center;}
+  .status-msg.success{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);display:block;}
+  .status-msg.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red);display:block;}
+
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .section-header h3{font-family:'Rajdhani',sans-serif;font-size:20px;}
+  .btn-refresh{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 14px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+  .product-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;gap:14px;align-items:flex-start;margin-bottom:10px;animation:fadeUp .3s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .product-thumb{width:72px;height:72px;border-radius:8px;object-fit:contain;background:#0a1220;flex-shrink:0;padding:4px;}
+  .product-info{flex:1;min-width:0;}
+  .pname{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pmeta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .product-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+  .btn-edit{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);border-radius:7px;padding:7px 12px;color:var(--accent);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-edit:hover{background:rgba(0,212,255,.2);}
+  .btn-delete{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:7px 12px;color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-delete:hover{background:rgba(239,68,68,.2);}
+
+  .empty-list{text-align:center;padding:48px 20px;color:var(--muted);}
+  .loading-spinner{text-align:center;padding:40px;color:var(--muted);}
+
+  .cat-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .cat-name{font-size:15px;font-weight:500;}
+  .cat-count{font-size:12px;color:var(--muted);margin-top:2px;}
+  .btn-del-cat{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:6px 12px;color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+  .btn-del-cat:hover{background:rgba(239,68,68,.2);}
+  .cats-note{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+
+  /* EDIT MODAL */
+  .edit-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+  .edit-overlay.open{display:flex;}
+  .edit-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;padding:24px;animation:popIn .28s ease both;margin:auto;}
+  @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+  .edit-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .edit-modal-header h3{font-family:'Rajdhani',sans-serif;font-size:20px;}
+  .edit-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;}
+  .edit-img-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;background:var(--surface);border-radius:10px;padding:12px;}
+  .edit-img-preview{width:72px;height:72px;object-fit:contain;border-radius:8px;background:#0a1220;padding:4px;flex-shrink:0;}
+  .edit-img-info{flex:1;}
+  .edit-img-info p{font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .btn-change-img{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 14px;color:var(--accent);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;position:relative;overflow:hidden;}
+  .btn-change-img input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .edit-actions{display:flex;gap:10px;margin-top:8px;}
+  .btn-cancel{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+  .btn-save-edit{flex:2;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:8px;padding:12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-save-edit:disabled{opacity:.5;cursor:not-allowed;}
+  .edit-status{border-radius:7px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;text-align:center;}
+  .edit-status.success{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);display:block;}
+  .edit-status.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red);display:block;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-icon">🔒</div>
+    <h2>Admin Login</h2>
+    <p>Vectra Electronics Hub — Private Panel</p>
+    <input type="password" id="pwInput" placeholder="Enter your password" onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-primary" onclick="login()">Enter Dashboard</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminApp">
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-name">VECTRA ADMIN</div>
+        <div class="logo-sub">Product Manager</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="badge-count" id="productCount">0 products</div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- SETUP -->
+    <div id="setupBanner">
+      <h3>⚙️ One-Time Setup — Connect Your GitHub</h3>
+      <div class="setup-fields">
+        <div class="form-group" style="margin:0"><label>GitHub Username</label><input type="text" id="ghUser" placeholder="e.g. IAMBOYYY"></div>
+        <div class="form-group" style="margin:0"><label>Repository Name</label><input type="text" id="ghRepo" placeholder="e.g. Catalog-"></div>
+        <div class="form-group" style="margin:0"><label>GitHub Token</label><input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx"></div>
+        <div class="form-group" style="margin:0"><label>ImgBB API Key</label><input type="text" id="imgbbKey" placeholder="Get free at imgbb.com/api"></div>
+      </div>
+      <div class="setup-hint">🔑 GitHub Token: Settings → Developer Settings → Personal Access Tokens → tick <strong>repo</strong><br>🖼️ ImgBB: imgbb.com → API (free)</div>
+      <button class="btn-save-setup" onclick="saveSetup()">💾 Save Settings</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('add')">➕ Add Product</button>
+      <button class="tab" onclick="switchTab('list')">📦 Manage Products</button>
+      <button class="tab" onclick="switchTab('cats')">🏷️ Categories</button>
+    </div>
+
+    <!-- ADD -->
+    <div id="addTab" class="visible">
+      <div class="form-card">
+        <h3>➕ Add New Product</h3>
+        <div class="form-group">
+          <label>Product Photo</label>
+          <div class="img-upload-area">
+            <input type="file" id="imageFile" accept="image/*" onchange="previewAddImage(event)">
+            <div class="upload-icon" id="addUploadIcon">📷</div>
+            <div class="upload-text" id="addUploadText">Tap to choose photo<br><strong>JPG, PNG, WEBP</strong></div>
+            <img class="img-preview-add" id="addImgPreview" src="" alt="">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0"><label>Product Name *</label><input type="text" id="pName" placeholder="e.g. boAt Airdopes 141"></div>
+          <div class="form-group" style="margin:0">
+            <label>Category *</label>
+            <input type="text" id="pCategory" placeholder="e.g. Earbuds" list="catSuggestions">
+            <datalist id="catSuggestions">
+              <option value="Earbuds"><option value="Smartphones"><option value="Chargers">
+              <option value="Power Banks"><option value="Smartwatches"><option value="Headphones">
+              <option value="Speakers"><option value="Storage"><option value="Networking">
+              <option value="Cables"><option value="TVs"><option value="Accessories">
+            </datalist>
+          </div>
+        </div>
+        <div class="form-group"><label>Description *</label><textarea id="pDesc" placeholder="Key features, specs..."></textarea></div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label>Badge</label>
+            <select id="pBadge">
+              <option value="">No Badge</option>
+              <option value="HOT">🔥 HOT</option>
+              <option value="NEW">✨ NEW</option>
+              <option value="SALE">💥 SALE</option>
+              <option value="TOP">⭐ TOP</option>
+              <option value="OUT OF STOCK">🚫 Out of Stock</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0"><label>Price (optional)</label><input type="text" id="pPrice" placeholder="e.g. ₹1,299 or leave blank"></div>
+        </div>
+        <button class="btn-submit" id="submitBtn" onclick="addProduct()">
+          <span id="submitText">💾 Save & Publish Product</span>
+        </button>
+        <div class="status-msg" id="statusMsg"></div>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div id="listTab">
+      <div class="section-header">
+        <h3>📦 All Products</h3>
+        <button class="btn-refresh" onclick="loadProducts()">🔄 Refresh</button>
+      </div>
+      <div id="productList"><div class="loading-spinner">Loading...</div></div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div id="catsTab">
+      <div class="section-header">
+        <h3>🏷️ Categories</h3>
+        <button class="btn-refresh" onclick="loadProducts()">🔄 Refresh</button>
+      </div>
+      <p class="cats-note">⚠️ Deleting a category will also delete all products inside it. This cannot be undone.</p>
+      <div id="catList"><div class="loading-spinner">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-modal">
+    <div class="edit-modal-header">
+      <h3>✏️ Edit Product</h3>
+      <button class="edit-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="edit-img-row">
+      <img id="editImgPreview" class="edit-img-preview" src="" alt="">
+      <div class="edit-img-info">
+        <p>Tap below to change the product photo</p>
+        <label class="btn-change-img">
+          📷 Change Photo
+          <input type="file" id="editImageFile" accept="image/*" onchange="previewEditImage(event)">
+        </label>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0"><label>Product Name *</label><input type="text" id="editName"></div>
+      <div class="form-group" style="margin:0"><label>Category *</label><input type="text" id="editCategory" list="catSuggestions"></div>
+    </div>
+    <div class="form-group"><label>Description *</label><textarea id="editDesc"></textarea></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label>Badge</label>
+        <select id="editBadge">
+          <option value="">No Badge</option>
+          <option value="HOT">🔥 HOT</option>
+          <option value="NEW">✨ NEW</option>
+          <option value="SALE">💥 SALE</option>
+          <option value="TOP">⭐ TOP</option>
+          <option value="OUT OF STOCK">🚫 Out of Stock</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label>Price</label><input type="text" id="editPrice" placeholder="e.g. ₹1,299 or leave blank"></div>
+    </div>
+    <input type="hidden" id="editId">
+    <input type="hidden" id="editCurrentImage">
+    <div class="edit-actions">
+      <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
+      <button class="btn-save-edit" id="editSaveBtn" onclick="saveEdit()">
+        <span id="editSaveText">💾 Save Changes</span>
+      </button>
+    </div>
+    <div class="edit-status" id="editStatus"></div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = "vectra2025"; // ← Change this!
+
+let ghUser="", ghRepo="", ghToken="", imgbbKey="";
+let allProducts=[], fileSHA="";
+
+function login() {
+  if (document.getElementById("pwInput").value === ADMIN_PASSWORD) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("adminApp").style.display = "block";
+    loadSetup(); loadProducts();
+  } else {
+    document.getElementById("loginError").textContent = "Wrong password.";
+    document.getElementById("pwInput").value = "";
+  }
+}
+
+function logout() {
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("adminApp").style.display = "none";
+  document.getElementById("pwInput").value = "";
+}
+
+function loadSetup() {
+  ghUser = localStorage.getItem("v_ghUser")||"";
+  ghRepo = localStorage.getItem("v_ghRepo")||"";
+  ghToken = localStorage.getItem("v_ghToken")||"";
+  imgbbKey = localStorage.getItem("v_imgbbKey")||"";
+  document.getElementById("ghUser").value = ghUser;
+  document.getElementById("ghRepo").value = ghRepo;
+  document.getElementById("ghToken").value = ghToken;
+  document.getElementById("imgbbKey").value = imgbbKey;
+  if (ghUser && ghRepo && ghToken) document.getElementById("setupBanner").style.display = "none";
+}
+
+function saveSetup() {
+  ghUser = document.getElementById("ghUser").value.trim();
+  ghRepo = document.getElementById("ghRepo").value.trim();
+  ghToken = document.getElementById("ghToken").value.trim();
+  imgbbKey = document.getElementById("imgbbKey").value.trim();
+  localStorage.setItem("v_ghUser", ghUser);
+  localStorage.setItem("v_ghRepo", ghRepo);
+  localStorage.setItem("v_ghToken", ghToken);
+  localStorage.setItem("v_imgbbKey", imgbbKey);
+  if (ghUser && ghRepo && ghToken) {
+    document.getElementById("setupBanner").style.display = "none";
+    loadProducts();
+    alert("✅ Settings saved!");
+  } else {
+    alert("Please fill GitHub Username, Repo, and Token.");
+  }
+}
+
+function switchTab(tab) {
+  ["add","list","cats"].forEach((t,i) => {
+    document.querySelectorAll(".tab")[i].classList.toggle("active", t===tab);
+    document.getElementById(t+"Tab").classList.toggle("visible", t===tab);
+  });
+  if (tab==="list"||tab==="cats") loadProducts();
+}
+
+function previewAddImage(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById("addImgPreview");
+    img.src = ev.target.result; img.style.display = "block";
+    document.getElementById("addUploadIcon").textContent = "✅";
+    document.getElementById("addUploadText").innerHTML = "<strong>" + file.name + "</strong>";
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewEditImage(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById("editImgPreview").src = ev.target.result; };
+  reader.readAsDataURL(file);
+}
+
+async function uploadImg(file) {
+  if (!imgbbKey) throw new Error("No ImgBB API key in settings.");
+  const fd = new FormData(); fd.append("image", file);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, { method:"POST", body:fd });
+  const data = await res.json();
+  if (!data.success) throw new Error("Image upload failed.");
+  return data.data.url;
+}
+
+async function fetchProducts() {
+  if (!ghUser||!ghRepo||!ghToken) return;
+  const res = await fetch(`https://api.github.com/repos/${ghUser}/${ghRepo}/contents/products.json`, {
+    headers:{ Authorization:`token ${ghToken}`, Accept:"application/vnd.github.v3+json" }
+  });
+  if (res.status===404) { allProducts=[]; fileSHA=""; return; }
+  const data = await res.json();
+  fileSHA = data.sha;
+  allProducts = JSON.parse(atob(data.content.replace(/\n/g,"")));
+}
+
+async function saveProducts() {
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(allProducts, null, 2))));
+  const res = await fetch(`https://api.github.com/repos/${ghUser}/${ghRepo}/contents/products.json`, {
+    method:"PUT",
+    headers:{ Authorization:`token ${ghToken}`, "Content-Type":"application/json" },
+    body: JSON.stringify({ message:"Update products", content, ...(fileSHA?{sha:fileSHA}:{}) })
+  });
+  const data = await res.json();
+  if (data.content) fileSHA = data.content.sha;
+  if (!res.ok) throw new Error(data.message||"GitHub save failed");
+}
+
+async function addProduct() {
+  const name = document.getElementById("pName").value.trim();
+  const cat = document.getElementById("pCategory").value.trim();
+  const desc = document.getElementById("pDesc").value.trim();
+  if (!name||!cat||!desc) { showStatus("Fill Name, Category & Description.", "error"); return; }
+  if (!ghToken) { showStatus("Complete Setup first.", "error"); return; }
+  const btn = document.getElementById("submitBtn");
+  const txt = document.getElementById("submitText");
+  btn.disabled = true;
+  try {
+    let img = "https://placehold.co/400x400/0e1420/6b7a92?text=No+Image";
+    const file = document.getElementById("imageFile").files[0];
+    if (file) { txt.textContent="📤 Uploading image..."; img = await uploadImg(file); }
+    txt.textContent = "💾 Saving...";
+    await fetchProducts();
+    allProducts.push({
+      id: Date.now(),
+      name, category:cat, description:desc,
+      badge: document.getElementById("pBadge").value,
+      price: document.getElementById("pPrice").value.trim() || "On Request",
+      image: img
+    });
+    await saveProducts();
+    showStatus("✅ Product published! Live on your website.", "success");
+    ["pName","pCategory","pDesc","pPrice"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("pBadge").value="";
+    document.getElementById("imageFile").value="";
+    document.getElementById("addImgPreview").style.display="none";
+    document.getElementById("addUploadIcon").textContent="📷";
+    document.getElementById("addUploadText").innerHTML="Tap to choose photo<br><strong>JPG, PNG, WEBP</strong>";
+    updateCount();
+  } catch(err) { showStatus("❌ "+err.message, "error"); }
+  btn.disabled=false; txt.textContent="💾 Save & Publish Product";
+}
+
+async function loadProducts() {
+  if (!ghToken) return;
+  document.getElementById("productList").innerHTML='<div class="loading-spinner">Loading...</div>';
+  document.getElementById("catList").innerHTML='<div class="loading-spinner">Loading...</div>';
+  try {
+    await fetchProducts();
+    renderList(); renderCats(); updateCount();
+  } catch(e) {
+    document.getElementById("productList").innerHTML='<div class="loading-spinner">Could not load. Check settings.</div>';
+  }
+}
+
+function renderList() {
+  const el = document.getElementById("productList");
+  if (!allProducts.length) { el.innerHTML='<div class="empty-list"><div style="font-size:40px">📦</div><p style="margin-top:10px">No products yet.</p></div>'; return; }
+  el.innerHTML = [...allProducts].reverse().map(p=>`
+    <div class="product-item">
+      <img class="product-thumb" src="${p.image}" alt="" onerror="this.src='https://placehold.co/72x72/0e1420/6b7a92?text=?'">
+      <div class="product-info">
+        <div class="pname">${p.name}</div>
+        <div class="pmeta">${p.category}${p.badge?' · <span style="color:var(--gold)">'+p.badge+'</span>':''} · ${p.price||'On Request'}</div>
+        <div class="pmeta" style="margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.description.substring(0,70)}...</div>
+      </div>
+      <div class="product-actions">
+        <button class="btn-edit" onclick="openEdit(${p.id})">✏️ Edit</button>
+        <button class="btn-delete" onclick="deleteProduct(${p.id})">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderCats() {
+  const catMap = {};
+  allProducts.forEach(p => catMap[p.category] = (catMap[p.category]||0)+1);
+  const cats = Object.entries(catMap);
+  const el = document.getElementById("catList");
+  if (!cats.length) { el.innerHTML='<div class="empty-list"><div style="font-size:40px">🏷️</div><p style="margin-top:10px">No categories yet.</p></div>'; return; }
+  el.innerHTML = cats.map(([name, count])=>`
+    <div class="cat-item">
+      <div>
+        <div class="cat-name">🏷️ ${name}</div>
+        <div class="cat-count">${count} product${count!==1?"s":""}</div>
+      </div>
+      <button class="btn-del-cat" onclick="deleteCategory('${name.replace(/'/g,"\\'")}', ${count})">
+        🗑️ Delete${count>0?" (removes "+count+" product"+(count!==1?"s":"")+")":" category"}
+      </button>
+    </div>
+  `).join("");
+}
+
+async function deleteProduct(id) {
+  if (!confirm("Delete this product from your website?")) return;
+  await fetchProducts();
+  allProducts = allProducts.filter(p=>p.id!==id);
+  await saveProducts();
+  renderList(); renderCats(); updateCount();
+}
+
+async function deleteCategory(name, count) {
+  const msg = count>0
+    ? `Delete "${name}" AND its ${count} product${count!==1?"s":""}? Cannot be undone.`
+    : `Delete empty category "${name}"?`;
+  if (!confirm(msg)) return;
+  await fetchProducts();
+  allProducts = allProducts.filter(p=>p.category!==name);
+  await saveProducts();
+  renderList(); renderCats(); updateCount();
+}
+
+function openEdit(id) {
+  const p = allProducts.find(x=>x.id===id); if (!p) return;
+  document.getElementById("editId").value = p.id;
+  document.getElementById("editCurrentImage").value = p.image;
+  document.getElementById("editImgPreview").src = p.image;
+  document.getElementById("editName").value = p.name;
+  document.getElementById("editCategory").value = p.category;
+  document.getElementById("editDesc").value = p.description;
+  document.getElementById("editBadge").value = p.badge||"";
+  document.getElementById("editPrice").value = (p.price==="On Request"||!p.price) ? "" : p.price;
+  document.getElementById("editImageFile").value = "";
+  document.getElementById("editStatus").className = "edit-status";
+  document.getElementById("editOverlay").classList.add("open");
+}
+
+function closeEdit() { document.getElementById("editOverlay").classList.remove("open"); }
+
+async function saveEdit() {
+  const id = parseInt(document.getElementById("editId").value);
+  const name = document.getElementById("editName").value.trim();
+  const cat = document.getElementById("editCategory").value.trim();
+  const desc = document.getElementById("editDesc").value.trim();
+  if (!name||!cat||!desc) { showEditStatus("Fill Name, Category & Description.", "error"); return; }
+  const btn = document.getElementById("editSaveBtn");
+  const txt = document.getElementById("editSaveText");
+  btn.disabled = true;
+  try {
+    let img = document.getElementById("editCurrentImage").value;
+    const file = document.getElementById("editImageFile").files[0];
+    if (file) { txt.textContent="📤 Uploading image..."; img = await uploadImg(file); }
+    txt.textContent = "💾 Saving...";
+    await fetchProducts();
+    const idx = allProducts.findIndex(x=>x.id===id);
+    if (idx===-1) throw new Error("Product not found.");
+    allProducts[idx] = {
+      id, name, category:cat, description:desc,
+      badge: document.getElementById("editBadge").value,
+      price: document.getElementById("editPrice").value.trim()||"On Request",
+      image: img
+    };
+    await saveProducts();
+    showEditStatus("✅ Saved! Live on your website.", "success");
+    renderList(); renderCats();
+  } catch(err) { showEditStatus("❌ "+err.message, "error"); }
+  btn.disabled=false; txt.textContent="💾 Save Changes";
+}
+
+document.getElementById("editOverlay").addEventListener("click", e=>{
+  if (e.target===document.getElementById("editOverlay")) closeEdit();
+});
+
+function updateCount() {
+  document.getElementById("productCount").textContent = allProducts.length+" product"+(allProducts.length!==1?"s":"");
+}
+function showStatus(msg, type) {
+  const el = document.getElementById("statusMsg");
+  el.textContent=msg; el.className="status-msg "+type;
+  el.scrollIntoView({behavior:"smooth"});
+  if (type==="success") setTimeout(()=>el.className="status-msg",6000);
+}
+function showEditStatus(msg, type) {
+  const el = document.getElementById("editStatus");
+  el.textContent=msg; el.className="edit-status "+type;
+}
+</script>
+</body>
+</html>
