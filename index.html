@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DroneLab Pro</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+[data-theme=dark]{--bg0:#07090f;--bg1:#0d1117;--bg2:#161b22;--bg3:#21262d;--bdr:#30363d;--txt:#f0f6fc;--sub:#8b949e;--acc:#00e5ff;--acc2:#7c3aed;--grn:#3fb950;--red:#f85149;--yel:#e3b341;--cbg:#0d1117;--cso:#060a0f;--hdr:#010409}
+[data-theme=light]{--bg0:#f6f8fa;--bg1:#fff;--bg2:#eaecef;--bg3:#d8dadd;--bdr:#d0d7de;--txt:#1f2328;--sub:#57606a;--acc:#0969da;--acc2:#8250df;--grn:#1a7f37;--red:#cf222e;--yel:#9a6700;--cbg:#fff;--cso:#f6f8fa;--hdr:#fff}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--txt);font-family:'SF Mono','JetBrains Mono','Fira Code',Consolas,monospace;font-size:13px}
+/* HEADER */
+#H{height:44px;display:flex;align-items:center;padding:0 10px;gap:7px;background:var(--hdr);border-bottom:1px solid var(--bdr);flex-shrink:0;z-index:100}
+#logo{display:flex;align-items:center;gap:7px;text-decoration:none}
+#logo-i{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#00e5ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+#logo-t{font-size:14px;font-weight:800}#logo-t b{color:var(--acc)}
+.tag{font-size:9px;padding:1px 5px;border-radius:6px;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;font-weight:700;letter-spacing:.8px}
+#HTABS{flex:1;display:flex;align-items:center;justify-content:center;gap:2px}
+.ht{height:32px;padding:0 12px;border:none;border-radius:5px;background:none;color:var(--sub);font-family:inherit;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.ht.on{color:var(--txt);border-bottom-color:var(--acc)}
+.ht:hover:not(.on){color:var(--txt)}
+#HR{display:flex;align-items:center;gap:5px}
+.hb{height:28px;padding:0 9px;border-radius:5px;border:1px solid var(--bdr);background:var(--bg3);color:var(--txt);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap}
+.hb:hover{border-color:var(--acc);color:var(--acc)}
+#RUN{background:var(--grn);border-color:var(--grn);color:#000;height:30px;padding:0 13px;font-size:12px}
+#RUN:hover{filter:brightness(1.12)}
+#STP{background:var(--red);border-color:var(--red);color:#fff;height:30px;display:none}
+#DOT{width:7px;height:7px;border-radius:50%;background:var(--bg3);flex-shrink:0;transition:all .3s}
+#DOT.live{background:var(--grn);box-shadow:0 0 8px var(--grn)}
+#DOT.err{background:var(--red);box-shadow:0 0 8px var(--red)}
+/* LAYOUT */
+#MAIN{height:calc(100vh - 44px);display:flex;overflow:hidden}
+/* SIM */
+#SP{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg0)}
+#STB{display:flex;align-items:center;padding:4px 8px;gap:6px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;overflow-x:auto}
+#STB::-webkit-scrollbar{display:none}
+#STB label{font-size:9px;color:var(--sub);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.ss,.sb{height:24px;padding:0 6px;border-radius:4px;border:1px solid var(--bdr);background:var(--bg1);color:var(--txt);font-family:inherit;font-size:11px;cursor:pointer;flex-shrink:0}
+.sb{padding:0 8px}.ss:hover,.sb:hover{border-color:var(--acc)}
+#CVW{flex:1;position:relative;overflow:hidden}
+canvas#C{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+canvas#C:active{cursor:grabbing}
+/* HUD */
+#HUD{position:absolute;top:8px;left:8px;pointer-events:none;display:flex;flex-direction:column;gap:4px}
+.hr2{display:flex;gap:4px}
+.hc{display:flex;align-items:center;gap:4px;background:rgba(7,9,15,.85);border:1px solid rgba(48,54,61,.8);border-radius:5px;padding:3px 8px;backdrop-filter:blur(6px)}
+[data-theme=light] .hc{background:rgba(246,248,250,.88);border-color:var(--bdr)}
+.hl{font-size:8px;color:var(--sub);letter-spacing:.8px;text-transform:uppercase}
+.hv{font-size:11px;font-weight:700;color:var(--acc);min-width:28px}
+#HINT{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(139,148,158,.55);pointer-events:none;background:rgba(7,9,15,.55);padding:3px 10px;border-radius:16px;white-space:nowrap}
+/* SPLITTER */
+#SPL{width:4px;background:var(--bdr);cursor:col-resize;flex-shrink:0;transition:background .2s}
+#SPL:hover,#SPL.drag{background:var(--acc)}
+/* CODE */
+#CP{width:46%;min-width:200px;display:flex;flex-direction:column;background:var(--cbg);border-left:1px solid var(--bdr)}
+#CTB{display:flex;align-items:center;padding:0 8px;height:32px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;gap:5px}
+.ct{height:26px;padding:0 10px;font-size:11px;color:var(--sub);border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;border-bottom:2px solid transparent;transition:all .15s}
+.ct.on{color:var(--acc);border-bottom-color:var(--acc)}
+.cd{width:5px;height:5px;border-radius:50%;background:var(--acc)}
+.ct-r{margin-left:auto;display:flex;gap:4px}
+.ct-r .hb{height:20px;font-size:10px;padding:0 6px}
+#CMW{flex:1;overflow:hidden;min-height:0}
+.CodeMirror{height:100%!important;font-size:13px!important;line-height:1.72!important;font-family:inherit!important}
+.CodeMirror-scroll{height:100%!important}
+[data-theme=dark] .CodeMirror{background:#0d1117!important}
+[data-theme=light] .CodeMirror{background:#fff!important}
+.CodeMirror-gutters{border-right:1px solid var(--bdr)!important}
+[data-theme=dark] .CodeMirror-gutters{background:#0d1117!important}
+[data-theme=light] .CodeMirror-gutters{background:#f6f8fa!important}
+/* CONSOLE */
+#CON{height:148px;display:flex;flex-direction:column;border-top:1px solid var(--bdr);flex-shrink:0}
+#CONH{display:flex;align-items:center;padding:0 10px;height:26px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;gap:8px}
+#CONH span{font-size:10px;color:var(--sub);letter-spacing:.8px;text-transform:uppercase}
+#CONH button{margin-left:auto;background:none;border:1px solid var(--bdr);color:var(--sub);padding:1px 7px;font-size:10px;border-radius:4px;cursor:pointer;font-family:inherit}
+#CONH button:hover{border-color:var(--acc);color:var(--acc)}
+#OUT{flex:1;overflow-y:auto;padding:5px 10px;font-size:12px;line-height:1.75;background:var(--cso)}
+#OUT::-webkit-scrollbar{width:3px}
+#OUT::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+.lo{color:var(--txt)}.lc{color:var(--acc)}.ls{color:var(--grn)}.le{color:var(--red)}.lw{color:var(--yel)}.li{color:#79c0ff}
+/* MOBILE NAV */
+#MN{display:none;height:52px;background:var(--hdr);border-top:1px solid var(--bdr);flex-shrink:0}
+.mb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;color:var(--sub);font-family:inherit;cursor:pointer;transition:color .2s;position:relative}
+.mb.on{color:var(--acc)}
+.mb.on::before{content:'';position:absolute;top:0;left:18%;right:18%;height:2px;background:var(--acc);border-radius:0 0 3px 3px}
+.mi{font-size:19px}.ml{font-size:9px;font-weight:700;letter-spacing:.4px}
+/* RESPONSIVE */
+@media(max-width:760px){
+  #HTABS,.dsk{display:none!important}
+  #H{padding:0 8px;gap:5px}
+  #logo-t,.tag{display:none}
+  #RUN,#STP{padding:0 10px;height:28px;font-size:11px}
+  #MAIN{flex-direction:column;height:calc(100vh - 44px - 52px)}
+  #SP,#CP{width:100%!important;flex:1;border-left:none;display:none!important}
+  #SP.ma,#CP.ma{display:flex!important}
+  #SPL{display:none!important}
+  #MN{display:flex!important}
+  #STB{padding:3px 6px;gap:4px}
+  #CON{height:120px}
+}
+@media(min-width:761px){
+  #SP{display:flex!important}
+  #CP{display:flex!important}
+  #MN{display:none!important}
+}
+/* SPLASH */
+#SPLASH{position:fixed;inset:0;z-index:9999;background:#07090f;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;animation:splOut .5s 1.8s ease forwards}
+@keyframes splOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+.si{font-size:52px;animation:hov 1.4s ease-in-out infinite}
+@keyframes hov{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.st{font-size:22px;font-weight:900;letter-spacing:6px;color:#00e5ff}
+.ss3{font-size:9px;color:#8b949e;letter-spacing:3px;animation:blk 1s infinite}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.25}}
+/* DROP */
+#DRP{position:fixed;inset:0;z-index:500;background:rgba(0,229,255,.08);border:3px dashed var(--acc);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--acc);font-size:18px}
+#DRP.show{display:flex}
+</style>
+</head>
+<body>
+
+<div id="SPLASH">
+  <div class="si">&#x1F681;</div>
+  <div class="st">DRONELAB PRO</div>
+  <div class="ss3">LOADING SIMULATION ENGINE...</div>
+</div>
+<div id="DRP"><div>&#x1F4E6;</div><div style="font-size:13px">Drop .glb / .gltf to load drone model</div></div>
+
+<div id="H">
+  <a id="logo" href="#"><div id="logo-i">&#x1F681;</div><div id="logo-t">Drone<b>Lab</b></div></a>
+  <div class="tag">PRO</div>
+  <div id="HTABS">
+    <button class="ht on" data-v="both">&#x2B1B; Split</button>
+    <button class="ht" data-v="sim">&#x1F310; Sim</button>
+    <button class="ht" data-v="code">&#x1F4DD; Code</button>
+  </div>
+  <div id="HR">
+    <div id="DOT"></div>
+    <button class="hb dsk" id="SAVBTN">&#x1F4BE; Save</button>
+    <button class="hb dsk" id="LOADBTN">&#x1F4C2; Load</button>
+    <button class="hb dsk" id="UPBTN">&#x1F4E6; Model</button>
+    <button class="hb" id="THBTN">&#x1F319;</button>
+    <button class="hb" id="RUN">&#x25B6; Run</button>
+    <button class="hb" id="STP">&#x26D4; Stop</button>
+  </div>
+</div>
+
+<input type="file" id="FPY" accept=".py" style="display:none">
+<input type="file" id="FGLB" accept=".glb,.gltf" style="display:none">
+
+<div id="MAIN">
+  <div id="SP" class="ma">
+    <div id="STB">
+      <label>ENV</label>
+      <select class="ss" id="ENVS">
+        <option value="night" selected>&#x1F319; Night</option>
+        <option value="day">&#x2600;&#xFE0F; Day</option>
+        <option value="afternoon">&#x26C5; Afternoon</option>
+        <option value="evening">&#x1F305; Evening</option>
+        <option value="indoor">&#x1F3E0; Indoor</option>
+        <option value="grass">&#x1F33F; Grass</option>
+        <option value="road">&#x1F6E3; Road</option>
+        <option value="mountain">&#x26F0; Mountain</option>
+      </select>
+      <label>DRONE</label>
+      <select class="ss" id="DSEL">
+        <option value="mavic">DJI Mavic</option>
+        <option value="racing">Racing</option>
+        <option value="delivery">Delivery</option>
+        <option value="custom">Custom GLB</option>
+      </select>
+      <button class="sb" id="RCAM">&#x29BB; Reset View</button>
+    </div>
+    <div id="CVW">
+      <canvas id="C"></canvas>
+      <div id="HUD">
+        <div class="hr2">
+          <div class="hc"><span class="hl">X</span><span class="hv" id="HX">0.0</span></div>
+          <div class="hc"><span class="hl">Y</span><span class="hv" id="HY">0.0</span></div>
+          <div class="hc"><span class="hl">ALT</span><span class="hv" id="HZ">0.0m</span></div>
+        </div>
+        <div class="hr2">
+          <div class="hc"><span class="hl">YAW</span><span class="hv" id="HYAW">0</span></div>
+          <div class="hc"><span class="hl">BAT</span><span class="hv" id="HBAT" style="color:var(--grn)">100%</span></div>
+          <div class="hc"><span class="hl">STATUS</span><span class="hv" id="HSTAT" style="color:var(--sub)">IDLE</span></div>
+        </div>
+      </div>
+      <div id="HINT">Drag: orbit | Scroll: zoom | Right-drag: pan | Pinch: zoom</div>
+    </div>
+  </div>
+
+  <div id="SPL"></div>
+
+  <div id="CP">
+    <div id="CTB">
+      <div class="ct on"><div class="cd"></div>mission.py</div>
+      <div class="ct-r">
+        <button class="hb" id="MSAV">&#x1F4BE;</button>
+        <button class="hb" id="MLOD">&#x1F4C2;</button>
+        <button class="hb" id="MMDL">&#x1F4E6;</button>
+      </div>
+    </div>
+    <div id="CMW"><textarea id="CODE"></textarea></div>
+    <div id="CON">
+      <div id="CONH">
+        <span>&#x25B8; Console</span>
+        <button onclick="document.getElementById('OUT').innerHTML=''">Clear</button>
+      </div>
+      <div id="OUT"></div>
+    </div>
+  </div>
+</div>
+
+<div id="MN">
+  <button class="mb on" id="MB_SIM"><span class="mi">&#x1F310;</span><span class="ml">SIM</span></button>
+  <button class="mb" id="MB_CODE"><span class="mi">&#x1F4DD;</span><span class="ml">CODE</span></button>
+  <button class="mb" id="MB_RUN"><span class="mi" id="RICO">&#x25B6;</span><span class="ml">RUN</span></button>
+  <button class="mb" id="MB_MDL"><span class="mi">&#x1F4E6;</span><span class="ml">MODEL</span></button>
+</div>
+
+<script>
+'use strict';
+
+// =============================================================
+// DEFAULT CODE
+// =============================================================
+var DEFAULT_CODE = [
+  "# DroneLab Pro - PySimverse API",
+  "# Based on FreeCodeCamp tutorial by Murtaza Hassan",
+  "from pysimverse import Drone",
+  "",
+  "drone = Drone()",
+  "drone.connect()",
+  "",
+  "# Mission 1: Square flight",
+  "drone.takeoff(height=5)",
+  "",
+  "for i in range(4):",
+  "    drone.move_forward(distance=3)",
+  "    drone.rotate_cw(degrees=90)",
+  "",
+  "# Sensor data",
+  "pos = drone.get_position()",
+  "print('Position: ' + str(pos))",
+  "print('Battery: ' + str(drone.get_battery()) + '%')",
+  "",
+  "# Mission 2: Spiral ascent",
+  "drone.move_up(distance=2)",
+  "drone.spiral(radius=2, height=3, turns=2)",
+  "",
+  "# Mission 3: Orbit",
+  "drone.go_to(x=0, y=0, z=6)",
+  "drone.orbit(cx=0, cy=0, radius=3, laps=1)",
+  "",
+  "# Mission 4: Stunt",
+  "drone.go_to(x=0, y=0, z=5)",
+  "drone.flip('forward')",
+  "drone.hover(seconds=1)",
+  "",
+  "# Mission 5: CV (FreeCodeCamp advanced)",
+  "face = drone.detect_face()",
+  "print('Face detected: ' + str(face['detected']))",
+  "",
+  "gesture = drone.detect_gesture()",
+  "print('Gesture: ' + str(gesture))",
+  "",
+  "drone.follow_line(path=[[0,0],[2,0],[4,2],[6,2]], height=2)",
+  "",
+  "# Land",
+  "drone.return_home()",
+  "drone.land()",
+  "print('Mission complete!')"
+].join('\n');
+
+// =============================================================
+// PYSIMVERSE MODULE SOURCE
+// This is returned when Skulpt does: from pysimverse import Drone
+// Uses _drone_* JS builtins (proven working pattern from Google AI Studio)
+// =============================================================
+var PYSIMVERSE_SOURCE = [
+  "class Drone:",
+  "    def __init__(self): pass",
+  "    def connect(self): _drone_connect()",
+  "    def disconnect(self): _drone_disconnect()",
+  "    def takeoff(self, height=3): _drone_takeoff(height)",
+  "    def land(self): _drone_land()",
+  "    def hover(self, seconds=1): _drone_hover(seconds)",
+  "    def return_home(self): _drone_return_home()",
+  "    def emergency_land(self): _drone_land()",
+  "    def move_forward(self, distance=1, speed=1): _drone_move('forward', distance, speed)",
+  "    def move_backward(self, distance=1, speed=1): _drone_move('backward', distance, speed)",
+  "    def move_left(self, distance=1, speed=1): _drone_move('left', distance, speed)",
+  "    def move_right(self, distance=1, speed=1): _drone_move('right', distance, speed)",
+  "    def move_up(self, distance=1): _drone_move('up', distance, 1)",
+  "    def move_down(self, distance=1): _drone_move('down', distance, 1)",
+  "    def go_to(self, x=0, y=0, z=0, speed=1): _drone_goto(x, y, z, speed)",
+  "    def set_position(self, x=0, y=0, z=0, speed=1): _drone_goto(x, y, z, speed)",
+  "    def rotate_cw(self, degrees=90): _drone_rotate(degrees)",
+  "    def rotate_ccw(self, degrees=90): _drone_rotate(-degrees)",
+  "    def set_yaw(self, angle=0): _drone_setyaw(angle)",
+  "    def set_speed(self, speed=1): _drone_setspeed(speed)",
+  "    def flip(self, direction='forward'): _drone_flip(direction)",
+  "    def flip_forward(self): _drone_flip('forward')",
+  "    def flip_backward(self): _drone_flip('backward')",
+  "    def flip_left(self): _drone_flip('left')",
+  "    def flip_right(self): _drone_flip('right')",
+  "    def orbit(self, cx=0, cy=0, radius=2, laps=1, direction='cw'): _drone_orbit(cx, cy, radius, laps, direction)",
+  "    def circle(self, radius=2, laps=1): _drone_circle(radius, laps)",
+  "    def spiral(self, radius=2, height=4, turns=2): _drone_spiral(radius, height, turns)",
+  "    def figure_8(self, size=3): _drone_figure8(size)",
+  "    def square(self, size=2): _drone_pattern('square', size, 0)",
+  "    def triangle(self, size=2): _drone_pattern('triangle', size, 0)",
+  "    def patrol(self, waypoints): _drone_patrol(waypoints)",
+  "    def lawnmower(self, width=8, length=6, rows=4): _drone_lawnmower(width, length, rows)",
+  "    def zigzag(self, width=2, distance=5, steps=6): _drone_zigzag(width, distance, steps)",
+  "    def take_photo(self): _drone_takephoto()",
+  "    def set_camera_angle(self, pitch=0, yaw=0): _drone_camerangle(pitch, yaw)",
+  "    def detect_face(self): return _drone_detectface()",
+  "    def detect_gesture(self): return _drone_detectgesture()",
+  "    def detect_object(self, label='object'): return _drone_detectobject(label)",
+  "    def follow_line(self, path, height=0): _drone_followline(path, height)",
+  "    def follow_body(self): _drone_followbody()",
+  "    def detect_color(self, color='red'): return _drone_detectcolor(color)",
+  "    def detect_qr(self): return _drone_detectqr()",
+  "    def navigate_to_room(self, room='garage'): _drone_navroom(room)",
+  "    def get_position(self): return _drone_getpos()",
+  "    def get_altitude(self): return _drone_getalt()",
+  "    def get_x(self): return _drone_getx()",
+  "    def get_y(self): return _drone_gety()",
+  "    def get_yaw(self): return _drone_getyaw()",
+  "    def get_speed(self): return _drone_getspeed()",
+  "    def get_battery(self): return _drone_getbat()",
+  "    def is_flying(self): return _drone_isflying()",
+  "    def distance_to(self, x=0, y=0, z=0): return _drone_distto(x, y, z)",
+  "    def print_status(self): _drone_status()",
+  "    def log(self, msg): print(str(msg))"
+].join('\n');
+
+// =============================================================
+// THREE.JS SETUP
+// =============================================================
+var cvs = document.getElementById('C');
+var cvw = document.getElementById('CVW');
+var rndr = new THREE.WebGLRenderer({ canvas: cvs, antialias: true });
+rndr.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+rndr.shadowMap.enabled = true;
+rndr.shadowMap.type = THREE.PCFSoftShadowMap;
+rndr.toneMapping = THREE.ACESFilmicToneMapping;
+rndr.toneMappingExposure = 1.0;
+
+var scene = new THREE.Scene();
+var cam = new THREE.PerspectiveCamera(50, 1, 0.05, 600);
+var camR = 20, camTh = 42, camPh = 30;
+var camTgt = new THREE.Vector3(0, 2, 0);
+var panOff = new THREE.Vector3();
+
+function updateCam() {
+  var ph = camPh * Math.PI / 180, th = camTh * Math.PI / 180;
+  cam.position.set(
+    camTgt.x + panOff.x + camR * Math.cos(ph) * Math.sin(th),
+    camTgt.y + panOff.y + camR * Math.sin(ph),
+    camTgt.z + panOff.z + camR * Math.cos(ph) * Math.cos(th)
+  );
+  cam.lookAt(camTgt.x + panOff.x, camTgt.y + panOff.y, camTgt.z + panOff.z);
+}
+function resz() {
+  var W = cvw.clientWidth || 1, H = cvw.clientHeight || 1;
+  rndr.setSize(W, H); cam.aspect = W / H; cam.updateProjectionMatrix();
+}
+window.addEventListener('resize', resz);
+new ResizeObserver(resz).observe(cvw);
+
+// Orbit controls
+var dn = false, lx = 0, ly = 0, rmb = false, pd2 = 0;
+cvs.addEventListener('mousedown', function(e) { dn=true; lx=e.clientX; ly=e.clientY; rmb=e.button===2; e.preventDefault(); });
+cvs.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+document.addEventListener('mousemove', function(e) {
+  if (!dn) return;
+  var dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+  if (rmb) { panOff.x-=dx*.022; panOff.z-=dy*.022; }
+  else { camTh-=dx*.38; camPh=Math.max(3,Math.min(88,camPh+dy*.30)); }
+});
+document.addEventListener('mouseup', function() { dn=false; });
+cvs.addEventListener('wheel', function(e) { camR=Math.max(3,Math.min(80,camR+e.deltaY*.045)); }, {passive:true});
+cvs.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (e.touches.length===1) { dn=true; lx=e.touches[0].clientX; ly=e.touches[0].clientY; }
+  if (e.touches.length===2) { dn=false; pd2=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); }
+}, {passive:false});
+cvs.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (e.touches.length===1&&dn) { camTh-=(e.touches[0].clientX-lx)*.42; camPh=Math.max(3,Math.min(88,camPh+(e.touches[0].clientY-ly)*.32)); lx=e.touches[0].clientX; ly=e.touches[0].clientY; }
+  if (e.touches.length===2) { var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); camR=Math.max(3,Math.min(80,camR-(d-pd2)*.05)); pd2=d; }
+}, {passive:false});
+cvs.addEventListener('touchend', function() { dn=false; });
+document.getElementById('RCAM').onclick = function() { camR=20; camTh=42; camPh=30; panOff.set(0,0,0); camTgt.set(0,2,0); };
+
+// =============================================================
+// ENVIRONMENTS
+// =============================================================
+var envObjs = [], sunL, fillL, ambL;
+var ENVS = {
+  night:    {sky:0x020508,fog:0x060a12,fd:.022,si:.35,sc:0x5577aa,sp:[12,22,8], ai:.18,ac:0x1a2244},
+  day:      {sky:0x5bb8e8,fog:0x99d4ef,fd:.010,si:1.2,sc:0xfffbe0,sp:[22,44,18],ai:.65,ac:0xfff5dd},
+  afternoon:{sky:0x5a9ec8,fog:0x88c8e0,fd:.011,si:1.0,sc:0xffd888,sp:[10,28,22],ai:.55,ac:0xffeedd},
+  evening:  {sky:0x16082e,fog:0x2e1222,fd:.020,si:.65,sc:0xff5522,sp:[-4,9,22], ai:.30,ac:0xff8844},
+  indoor:   {sky:0x181824,fog:0x181824,fd:.050,si:.85,sc:0xfff5cc,sp:[0,12,0],  ai:.55,ac:0xfff2cc},
+  grass:    {sky:0x5bbee2,fog:0x88d8ee,fd:.010,si:1.1,sc:0xffffff,sp:[16,38,12],ai:.60,ac:0xddfadd},
+  road:     {sky:0x78b0cc,fog:0x99c8de,fd:.011,si:1.0,sc:0xffffff,sp:[22,32,12],ai:.52,ac:0xddeeff},
+  mountain: {sky:0x325a74,fog:0x224466,fd:.016,si:.92,sc:0xffeebb,sp:[22,44,6], ai:.42,ac:0xddeeff}
+};
+
+function mkMesh(geo,color,rx,ry,rz,x,y,z) {
+  rx=rx||0;ry=ry||0;rz=rz||0;x=x||0;y=y||0;z=z||0;
+  var m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:color}));
+  m.rotation.set(rx,ry,rz); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true;
+  return m;
+}
+function mkStars(n,range,ymin,ymax) {
+  var sv=[];
+  for(var i=0;i<n;i++) sv.push((Math.random()-.5)*range,Math.random()*(ymax-ymin)+ymin,(Math.random()-.5)*range);
+  var sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
+  return new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:.22,transparent:true,opacity:.9}));
+}
+
+function setEnv(key) {
+  envObjs.forEach(function(o){scene.remove(o);}); envObjs=[];
+  var E=ENVS[key]||ENVS.night;
+  rndr.setClearColor(E.sky); scene.background=new THREE.Color(E.sky);
+  scene.fog=new THREE.FogExp2(E.fog,E.fd);
+  if(sunL)scene.remove(sunL); if(fillL)scene.remove(fillL); if(ambL)scene.remove(ambL);
+  ambL=new THREE.AmbientLight(E.ac,E.ai);
+  sunL=new THREE.DirectionalLight(E.sc,E.si); sunL.position.set(E.sp[0],E.sp[1],E.sp[2]); sunL.castShadow=true;
+  sunL.shadow.mapSize.set(2048,2048);
+  sunL.shadow.camera.left=sunL.shadow.camera.bottom=-45;
+  sunL.shadow.camera.right=sunL.shadow.camera.top=45;
+  sunL.shadow.camera.near=.5; sunL.shadow.camera.far=130;
+  fillL=new THREE.PointLight(0x00e5ff,.4,40); fillL.position.set(-8,10,-8);
+  scene.add(ambL,sunL,fillL);
+  function add(o){scene.add(o);envObjs.push(o);}
+  function floor(c,s){s=s||120;return mkMesh(new THREE.PlaneGeometry(s,s),c,-Math.PI/2,0,0,0,0,0);}
+
+  if(key==='night'){
+    add(floor(0x060810)); add(new THREE.GridHelper(100,50,0x0d2030,0x0a1820));
+    add(mkStars(800,300,15,90));
+    var moon=new THREE.Mesh(new THREE.SphereGeometry(3.5,14,10),new THREE.MeshBasicMaterial({color:0xeeeedd}));moon.position.set(-50,56,-65);add(moon);
+    for(var i=-2;i<=2;i++){
+      add(mkMesh(new THREE.CylinderGeometry(.1,.1,5.5,6),0x334455,0,0,0,i*10,2.75,16));
+      var b2=new THREE.Mesh(new THREE.SphereGeometry(.3,7,7),new THREE.MeshBasicMaterial({color:0xffee88}));b2.position.set(i*10,5.65,16);add(b2);
+      var pl=new THREE.PointLight(0xffee88,.9,14);pl.position.set(i*10,5.3,16);add(pl);
+    }
+  } else if(key==='day'||key==='afternoon'){
+    add(floor(0x4a9038)); var g2=new THREE.GridHelper(100,50,0x2a7020,0x2a7020);g2.material.opacity=.28;g2.material.transparent=true;add(g2);
+    for(var t=0;t<10;t++){var tx=(Math.random()-.5)*80,tz=(Math.random()-.5)*80;if(Math.abs(tx)<10&&Math.abs(tz)<10)continue;add(mkMesh(new THREE.CylinderGeometry(.3,.5,3,7),0x5a3200,0,0,0,tx,1.5,tz));add(mkMesh(new THREE.ConeGeometry(1.8,3.5,8),0x267a26,0,0,0,tx,4.5,tz));}
+    for(var c2=0;c2<6;c2++)add(mkMesh(new THREE.SphereGeometry(2+Math.random()*3,8,6),0xffffff,0,0,0,(Math.random()-.5)*80,25+Math.random()*15,(Math.random()-.5)*80));
+  } else if(key==='evening'){
+    add(floor(0x2a1a10)); add(mkStars(600,300,18,90));
+    var gh=new THREE.Mesh(new THREE.PlaneGeometry(140,20),new THREE.MeshBasicMaterial({color:0xff4400,transparent:true,opacity:.18,side:THREE.DoubleSide}));gh.rotation.y=Math.PI/2;gh.position.set(-50,6,0);add(gh);
+  } else if(key==='indoor'){
+    add(floor(0x8a7a68,22));
+    var rm=new THREE.Mesh(new THREE.BoxGeometry(24,14,24),new THREE.MeshLambertMaterial({color:0xc8b898,side:THREE.BackSide}));rm.position.y=7;add(rm);
+    var cf=new THREE.Mesh(new THREE.BoxGeometry(4,.08,4),new THREE.MeshBasicMaterial({color:0xfff6ee}));cf.position.set(0,13.94,0);add(cf);
+    var cl=new THREE.PointLight(0xfff4cc,1.6,28);cl.position.set(0,12,0);add(cl);
+    add(mkMesh(new THREE.BoxGeometry(3,1.4,5),0x4a3218,0,0,0,8.5,.7,0));
+    add(new THREE.GridHelper(20,20,0x9a8a78,0x9a8a78));
+  } else if(key==='grass'){
+    add(floor(0x3a8a22));
+    for(var f=0;f<30;f++){var fx=(Math.random()-.5)*80,fz=(Math.random()-.5)*80;add(mkMesh(new THREE.SphereGeometry(.35,6,5),Math.random()>.5?0xffdd44:0xff6699,0,0,0,fx,.35,fz));}
+    add(mkStars(200,200,60,120));
+  } else if(key==='road'){
+    add(floor(0x557766)); add(mkMesh(new THREE.PlaneGeometry(9,100),0x3a3a3a,-Math.PI/2,0,0,0,.01,0));
+    for(var d3=-9;d3<=9;d3++) add(mkMesh(new THREE.PlaneGeometry(.28,3.2),0xffff44,-Math.PI/2,0,0,0,.02,d3*6));
+    var cz=[-22,-8,6,20,35],cc2=[0xcc3333,0x3366cc,0xcccc33,0x33cc66,0xcc6633];
+    for(var ci=0;ci<cz.length;ci++){var cs=ci%2===0?3:-3;add(mkMesh(new THREE.BoxGeometry(2.2,1.1,3.8),cc2[ci],0,0,0,cs,.6,cz[ci]));add(mkMesh(new THREE.BoxGeometry(1.7,.85,2.2),cc2[ci],0,0,0,cs,1.6,cz[ci]));}
+    add(new THREE.GridHelper(120,60,0x446655,0x446655));
+  } else if(key==='mountain'){
+    add(floor(0x4a6240,200)); add(new THREE.GridHelper(120,60,0x3a5230,0x3a5230));
+    var peaks=[[40,-42,9,26],[36,48,7,20],[58,22,6,18],[-52,-28,11,30],[-38,42,8,22]];
+    for(var pi2=0;pi2<peaks.length;pi2++){var pk=peaks[pi2];add(mkMesh(new THREE.ConeGeometry(pk[2],pk[3],9),0x5a6458,0,0,0,pk[0],pk[3]/2,pk[1]));add(mkMesh(new THREE.ConeGeometry(pk[2]*.28,pk[3]*.3,9),0xeeeeff,0,0,0,pk[0],pk[3]*.86,pk[1]));}
+    for(var mt=0;mt<16;mt++){var mx2=(Math.random()-.5)*48,mz2=(Math.random()-.5)*48;add(mkMesh(new THREE.ConeGeometry(1.2+Math.random()*.8,4+Math.random()*3,7),0x2a6a2a,0,0,0,mx2,2.5,mz2));}
+    add(mkStars(400,300,30,100));
+  }
+  // Always: landing pad + axes
+  var lp=new THREE.Mesh(new THREE.CircleGeometry(1.7,32),new THREE.MeshBasicMaterial({color:0x00e5ff,transparent:true,opacity:.16}));lp.rotation.x=-Math.PI/2;lp.position.y=.01;add(lp);
+  var lr=new THREE.Mesh(new THREE.RingGeometry(1.6,1.82,32),new THREE.MeshBasicMaterial({color:0x00e5ff,transparent:true,opacity:.55,side:THREE.DoubleSide}));lr.rotation.x=-Math.PI/2;lr.position.y=.015;add(lr);
+  var axdata=[[new THREE.Vector3(0,.01,0),new THREE.Vector3(3.5,.01,0),0xf85149],[new THREE.Vector3(0,.01,0),new THREE.Vector3(0,3.5,0),0x3fb950],[new THREE.Vector3(0,.01,0),new THREE.Vector3(0,.01,3.5),0x00e5ff]];
+  for(var ai=0;ai<axdata.length;ai++){var al2=new THREE.Line(new THREE.BufferGeometry().setFromPoints([axdata[ai][0],axdata[ai][1]]),new THREE.LineBasicMaterial({color:axdata[ai][2]}));add(al2);}
+}
+
+// =============================================================
+// DRONE MODELS
+// =============================================================
+var droneRoot=null, propGs=[], droneGlow=null, customMdl=null;
+
+function mkPhong(color,shin,spec,transp,opa,side) {
+  return new THREE.MeshPhongMaterial({color:color,shininess:shin||100,specular:spec||0,transparent:transp||false,opacity:opa!==undefined?opa:1,side:side||THREE.FrontSide});
+}
+function mkm2(geo,mat,rx,ry,rz,x,y,z) {
+  rx=rx||0;ry=ry||0;rz=rz||0;x=x||0;y=y||0;z=z||0;
+  var m=new THREE.Mesh(geo,mat);m.rotation.set(rx,ry,rz);m.position.set(x,y,z);m.castShadow=true;return m;
+}
+
+function buildMavic() {
+  var G=new THREE.Group();
+  var mBody=mkPhong(0x1e2a38,160,0x5588bb);var mDark=mkPhong(0x0e1520,80);var mArm=mkPhong(0x16202e,60);var mMot=mkPhong(0x080e18,220,0x336699);
+  var mProp=mkPhong(0x2a3848,30,0,true,.82,THREE.DoubleSide);var mGlass=mkPhong(0x001828,280,0x88ccff,true,.65);
+  var mLED=new THREE.MeshBasicMaterial({color:0x00e5ff});var mRed=new THREE.MeshBasicMaterial({color:0xff2222});var mGrn=new THREE.MeshBasicMaterial({color:0x22ff55});
+  G.add(mkm2(new THREE.BoxGeometry(2.3,.3,1.1),mBody));
+  G.add(mkm2(new THREE.BoxGeometry(1.1,.2,.68),mBody,0,0,0,-.1,.25,0));
+  G.add(mkm2(new THREE.BoxGeometry(.25,.2,.88),mDark,0,0,0,.97,-.04,0));
+  G.add(mkm2(new THREE.BoxGeometry(.52,.04,.05),mLED,0,0,0,.72,.18,0));
+  var mpa=[[1.85,0,-1.85],[1.85,0,1.85],[-1.85,0,-1.85],[-1.85,0,1.85]]; propGs=[];
+  for(var i=0;i<mpa.length;i++){
+    var mp3=mpa[i],mx=mp3[0],mz=mp3[2];
+    var al=Math.sqrt(mx*mx+mz*mz)*.88; G.add(mkm2(new THREE.BoxGeometry(al,.09,.09),mArm,0,Math.atan2(mx,mz),0,mx*.5,0,mz*.5));
+    G.add(mkm2(new THREE.CylinderGeometry(.24,.24,.14,14),mMot,0,0,0,mx,.07,mz));
+    G.add(mkm2(new THREE.CylinderGeometry(.15,.2,.1,12),mMot,0,0,0,mx,.17,mz));
+    var pg=new THREE.Group();pg.position.set(mx,.3,mz);
+    for(var b=0;b<2;b++){var blade=mkm2(new THREE.BoxGeometry(1.72,.02,.14),mProp,0,b*Math.PI/2,0.065);pg.add(blade);}
+    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.06,.09,.06,8),mMot));
+    G.add(pg);propGs.push(pg);
+    G.add(mkm2(new THREE.SphereGeometry(.07,6,6),i<2?mGrn:mRed,0,0,0,mx,.31,mz));
+  }
+  [-0.58,0.58].forEach(function(lz){
+    G.add(mkm2(new THREE.BoxGeometry(1.85,.05,.07),mArm,0,0,0,0,-.28,lz));
+    [-0.68,0.68].forEach(function(lxi){G.add(mkm2(new THREE.CylinderGeometry(.055,.055,.3,6),mArm,0,0,0,lxi,-.14,lz));});
+  });
+  G.add(mkm2(new THREE.SphereGeometry(.17,10,8),mDark,0,0,0,.9,-.23,0));
+  G.add(mkm2(new THREE.SphereGeometry(.11,10,8),mGlass,0,0,0,1.0,-.23,0));
+  droneGlow=new THREE.PointLight(0x00e5ff,0,6);droneGlow.position.set(0,-1.2,0);G.add(droneGlow);
+  G.traverse(function(c){if(c.isMesh)c.castShadow=true;});return G;
+}
+
+function buildRacing() {
+  var G=new THREE.Group(),mF=mkPhong(0x1a0806,120,0xff3300),mA=mkPhong(0x0a0808),mP=mkPhong(0xff2222,30,0,true,.82,THREE.DoubleSide);
+  G.add(mkm2(new THREE.CylinderGeometry(.35,.35,.1,5),mF));propGs=[];
+  [[1,0,-1],[1,0,1],[-1,0,-1],[-1,0,1]].forEach(function(r,i){
+    G.add(mkm2(new THREE.BoxGeometry(Math.SQRT2*.9,.07,.07),mA,0,Math.atan2(r[0],r[2]),0,r[0]*.5,0,r[2]*.5));
+    var pg=new THREE.Group();pg.position.set(r[0],.12,r[2]);
+    for(var b=0;b<2;b++)pg.add(mkm2(new THREE.BoxGeometry(1.3,.02,.11),mP,0,b*Math.PI/2,0));
+    G.add(pg);propGs.push(pg);
+  });
+  droneGlow=new THREE.PointLight(0xff3300,0,4);droneGlow.position.set(0,-.5,0);G.add(droneGlow);
+  G.traverse(function(c){if(c.isMesh)c.castShadow=true;});return G;
+}
+
+function buildDelivery() {
+  var G=new THREE.Group(),mB=mkPhong(0xf0eee0,110,0x4488aa),mA=mkPhong(0xc8c2b8),mP=mkPhong(0x8899aa,30,0,true,.8,THREE.DoubleSide),mBox=mkPhong(0x2266cc,80,0x88aacc);
+  G.add(mkm2(new THREE.CylinderGeometry(.62,.62,.22,7),mB));
+  G.add(mkm2(new THREE.BoxGeometry(1.1,.7,1.1),mBox,0,0,0,0,-.46,0));propGs=[];
+  [0,60,120,180,240,300].forEach(function(a){
+    var ha=a*Math.PI/180,hmx=2.1*Math.cos(ha),hmz=2.1*Math.sin(ha);
+    G.add(mkm2(new THREE.BoxGeometry(2.1,.07,.07),mA,0,Math.atan2(hmx,hmz),0,hmx*.5,0,hmz*.5));
+    var pg=new THREE.Group();pg.position.set(hmx,.14,hmz);
+    for(var b=0;b<2;b++)pg.add(mkm2(new THREE.BoxGeometry(1.4,.02,.12),mP,0,b*Math.PI/2,0));
+    G.add(pg);propGs.push(pg);
+  });
+  droneGlow=new THREE.PointLight(0xffffff,0,7);droneGlow.position.set(0,-1,0);G.add(droneGlow);
+  G.traverse(function(c){if(c.isMesh)c.castShadow=true;});return G;
+}
+
+function setDrone(type) {
+  if(droneRoot)scene.remove(droneRoot);
+  propGs=[];droneGlow=null;
+  if(type==='custom'&&customMdl){droneRoot=customMdl;scene.add(droneRoot);return;}
+  if(type==='racing')droneRoot=buildRacing();
+  else if(type==='delivery')droneRoot=buildDelivery();
+  else droneRoot=buildMavic();
+  scene.add(droneRoot);
+}
+
+// TRAIL
+var trailPts=[];
+var tGeo=new THREE.BufferGeometry();
+var tLine=new THREE.Line(tGeo,new THREE.LineBasicMaterial({color:0x00e5ff,transparent:true,opacity:.5}));
+scene.add(tLine);
+function addTrail(x,y,z){trailPts.push(new THREE.Vector3(x,y,z));if(trailPts.length>600)trailPts.shift();if(trailPts.length>=2)tGeo.setFromPoints(trailPts);}
+
+// =============================================================
+// AUDIO
+// =============================================================
+var aC=null,pO=null,pG=null,aOK=false;
+function initAudio(){if(aOK)return;try{aC=new(window.AudioContext||window.webkitAudioContext)();pO=aC.createOscillator();var f=aC.createBiquadFilter();f.type='lowpass';f.frequency.value=190;pG=aC.createGain();pG.gain.value=0;pO.type='sawtooth';pO.frequency.value=80;pO.connect(f);f.connect(pG);pG.connect(aC.destination);pO.start();aOK=true;}catch(e){}}
+function setHum(v,f){if(!aOK)return;pG.gain.setTargetAtTime(v,aC.currentTime,.28);pO.frequency.setTargetAtTime(f,aC.currentTime,.45);}
+function beep(f,d,v){f=f||880;d=d||.09;v=v||.1;if(!aOK)return;try{var o=aC.createOscillator(),g=aC.createGain();o.frequency.value=f;g.gain.setValueAtTime(v,aC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,aC.currentTime+d);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d);}catch(e){}}
+['click','touchstart'].forEach(function(ev){document.addEventListener(ev,initAudio,{once:true});});
+
+// =============================================================
+// DRONE VIRTUAL STATE & COMMAND QUEUE
+// (Python fills the queue, then animation executes it)
+// =============================================================
+var vState={x:0,y:0,z:0,yaw:0,spd:1,bat:100,flying:false};
+var commandQueue=[];
+
+// Add a command with drone-relative movement
+function addCmd(type,params,dur,log){
+  commandQueue.push({type:type,params:params||{},dur:dur||500,log:log||null});
+}
+
+// These functions are called from Python builtins
+// They update vState (virtual planned state) and push commands
+function cmd_takeoff(h){
+  if(vState.flying)return;
+  vState.flying=true; var ht=h||3;
+  addCmd('goto',{tx:vState.x,ty:vState.y,tz:ht,tyaw:vState.yaw},Math.max(800,ht*350),'takeoff(height='+ht+')');
+  vState.z=ht;
+}
+function cmd_land(){
+  vState.flying=false;
+  addCmd('goto',{tx:vState.x,ty:vState.y,tz:0,tyaw:vState.yaw},Math.max(800,vState.z*350),'land()');
+  vState.z=0;
+}
+function cmd_hover(s){addCmd('hover',{},s*1000,'hover('+s+'s)');}
+function cmd_move(dir,dist,spd){
+  dist=dist||1; if(spd>0)vState.spd=Math.min(5,Math.max(.1,spd));
+  var r=vState.yaw*Math.PI/180;
+  var nx=vState.x,ny=vState.y,nz=vState.z;
+  if(dir==='forward'){ nx+=Math.sin(r)*dist; ny+=Math.cos(r)*dist; }
+  else if(dir==='backward'){ nx-=Math.sin(r)*dist; ny-=Math.cos(r)*dist; }
+  else if(dir==='left'){ nx-=Math.cos(r)*dist; ny+=Math.sin(r)*dist; }
+  else if(dir==='right'){ nx+=Math.cos(r)*dist; ny-=Math.sin(r)*dist; }
+  else if(dir==='up')  { nz+=dist; }
+  else if(dir==='down'){ nz=Math.max(0,nz-dist); }
+  addCmd('goto',{tx:nx,ty:ny,tz:nz,tyaw:vState.yaw},Math.max(300,dist*380/vState.spd),dir+'('+dist+')');
+  vState.x=nx; vState.y=ny; vState.z=nz;
+}
+function cmd_goto(x,y,z,spd){
+  if(spd>0)vState.spd=Math.min(5,Math.max(.1,spd));
+  var d=Math.hypot(x-vState.x,y-vState.y,z-vState.z);
+  addCmd('goto',{tx:x,ty:y,tz:z,tyaw:vState.yaw},Math.max(400,d*380/vState.spd),'go_to('+x.toFixed(1)+','+y.toFixed(1)+','+z.toFixed(1)+')');
+  vState.x=x; vState.y=y; vState.z=z;
+}
+function cmd_rotate(deg){
+  addCmd('goto',{tx:vState.x,ty:vState.y,tz:vState.z,tyaw:vState.yaw+deg},Math.max(250,Math.abs(deg)*10/vState.spd),'rotate('+deg+'deg)');
+  vState.yaw+=deg;
+}
+function cmd_setyaw(a){
+  addCmd('goto',{tx:vState.x,ty:vState.y,tz:vState.z,tyaw:a},350,'set_yaw('+a+')');
+  vState.yaw=a;
+}
+function cmd_flip(dir){addCmd('flip',{dir:dir},700,'flip('+dir+')');}
+function cmd_orbit(cx,cy,radius,laps,direction){
+  var dd=direction==='ccw'?-1:1, steps=Math.ceil(44*laps);
+  clog('orbit(r='+radius+',laps='+laps+')','li');
+  for(var i=1;i<=steps;i++){var a=dd*(i/44)*Math.PI*2;var nx=cx+radius*Math.cos(a),ny=cy+radius*Math.sin(a);addCmd('goto',{tx:nx,ty:ny,tz:vState.z,tyaw:vState.yaw},90,null,true);vState.x=nx;vState.y=ny;}
+}
+function cmd_circle(radius,laps){
+  var steps=Math.ceil(44*laps),sx=vState.x,sy=vState.y;
+  clog('circle(r='+radius+')','li');
+  for(var i=1;i<=steps;i++){var a=(i/44)*Math.PI*2;var nx=sx+radius*Math.sin(a),ny=sy+radius-radius*Math.cos(a);addCmd('goto',{tx:nx,ty:ny,tz:vState.z,tyaw:vState.yaw},90,null,true);vState.x=nx;vState.y=ny;}
+}
+function cmd_spiral(radius,height,turns){
+  var steps=Math.ceil(44*turns),sx=vState.x,sy=vState.y,sz=vState.z;
+  clog('spiral(r='+radius+',h='+height+')','li');
+  for(var i=1;i<=steps;i++){var a=(i/44)*Math.PI*2;var nx=sx+radius*Math.cos(a),ny=sy+radius*Math.sin(a),nz=sz+height*(i/steps);addCmd('goto',{tx:nx,ty:ny,tz:nz,tyaw:vState.yaw},90,null,true);vState.x=nx;vState.y=ny;vState.z=nz;}
+}
+function cmd_figure8(size){
+  var cx=vState.x,cy=vState.y;
+  clog('figure_8(size='+size+')','li');
+  for(var i=1;i<=36;i++){var a=(i/36)*Math.PI*2;addCmd('goto',{tx:cx+size*Math.sin(a),ty:cy+size*Math.sin(a)*Math.cos(a),tz:vState.z,tyaw:vState.yaw},90,null,true);}
+  for(var i=1;i<=36;i++){var a=(i/36)*Math.PI*2;addCmd('goto',{tx:cx-size*Math.sin(a),ty:cy+size*Math.sin(a)*Math.cos(a),tz:vState.z,tyaw:vState.yaw},90,null,true);}
+}
+function cmd_pattern(shape,size){
+  var sides=shape==='triangle'?3:4,ang=shape==='triangle'?120:90;
+  clog(shape+'(size='+size+')','li');
+  for(var i=0;i<sides;i++){cmd_move('forward',size,1);cmd_rotate(ang);}
+}
+function cmd_patrol(wps){
+  clog('patrol('+wps.length+' pts)','li');
+  for(var i=0;i<wps.length;i++){var wp=wps[i],a=Array.isArray(wp)?wp:Object.values(wp);cmd_goto(+a[0]||0,+a[1]||0,a[2]!=null?+a[2]:vState.z,1);}
+}
+function cmd_lawnmower(w,l,rows){
+  clog('lawnmower','li'); var sp=w/rows;
+  for(var i=0;i<=rows;i++){var x=-w/2+i*sp;cmd_goto(x,vState.y,vState.z,1);cmd_goto(x,vState.y+(i%2===0?l:-l),vState.z,1);}
+}
+function cmd_zigzag(w,d,n){
+  clog('zigzag','li'); var step=d/n;
+  for(var i=0;i<n;i++){var r=vState.yaw*Math.PI/180;var side=i%2===0?w:-w;var nx=vState.x+Math.sin(r)*step+Math.cos(r)*side,ny=vState.y+Math.cos(r)*step-Math.sin(r)*side;addCmd('goto',{tx:nx,ty:ny,tz:vState.z,tyaw:vState.yaw},Math.max(200,step*300),null);vState.x=nx;vState.y=ny;}
+}
+function cmd_followline(path,height){
+  clog('follow_line('+path.length+' pts)','li');
+  var ht=height||vState.z;
+  for(var i=0;i<path.length;i++){var pt=path[i],a=Array.isArray(pt)?pt:Object.values(pt);addCmd('goto',{tx:+a[0]||0,ty:+a[1]||0,tz:ht,tyaw:vState.yaw},300,'->('+a[0]+','+a[1]+')',true);vState.x=+a[0]||0;vState.y=+a[1]||0;}
+}
+function cmd_return_home(){cmd_goto(0,0,vState.z,1);}
+
+// =============================================================
+// SKULPT BUILTINS
+// Register _drone_* functions that call cmd_* above
+// =============================================================
+function setupSkulpt() {
+  var b=Sk.builtins;
+  var NONE=Sk.builtin.none.none$;
+  function sk(fn){return new Sk.builtin.func(fn);}
+  function N(v,d){d=d!==undefined?d:0;return(v!=null&&v!==NONE)?Sk.ffi.remapToJs(v):d;}
+  function S(v,d){d=d!==undefined?d:'';return(v!=null&&v!==NONE)?Sk.ffi.remapToJs(v):d;}
+
+  b._drone_connect    = sk(function(){clog('drone.connect()','ls');beep(440,.1);return NONE;});
+  b._drone_disconnect = sk(function(){clog('drone.disconnect()','li');return NONE;});
+  b._drone_takeoff    = sk(function(h){cmd_takeoff(N(h,3));return NONE;});
+  b._drone_land       = sk(function(){cmd_land();return NONE;});
+  b._drone_hover      = sk(function(s){cmd_hover(N(s,1));return NONE;});
+  b._drone_return_home= sk(function(){cmd_return_home();return NONE;});
+  b._drone_move       = sk(function(dir,dist,spd){cmd_move(S(dir,'forward'),N(dist,1),N(spd,1));return NONE;});
+  b._drone_goto       = sk(function(x,y,z,spd){cmd_goto(N(x,0),N(y,0),N(z,vState.z),N(spd,1));return NONE;});
+  b._drone_rotate     = sk(function(deg){cmd_rotate(N(deg,90));return NONE;});
+  b._drone_setyaw     = sk(function(a){cmd_setyaw(N(a,0));return NONE;});
+  b._drone_setspeed   = sk(function(s){vState.spd=Math.max(.1,Math.min(5,N(s,1)));return NONE;});
+  b._drone_flip       = sk(function(dir){cmd_flip(S(dir,'forward'));return NONE;});
+  b._drone_orbit      = sk(function(cx,cy,r,laps,dir){cmd_orbit(N(cx,0),N(cy,0),N(r,2),N(laps,1),S(dir,'cw'));return NONE;});
+  b._drone_circle     = sk(function(r,laps){cmd_circle(N(r,2),N(laps,1));return NONE;});
+  b._drone_spiral     = sk(function(r,h,t){cmd_spiral(N(r,2),N(h,4),N(t,2));return NONE;});
+  b._drone_figure8    = sk(function(size){cmd_figure8(N(size,3));return NONE;});
+  b._drone_pattern    = sk(function(shape,size){cmd_pattern(S(shape,'square'),N(size,2));return NONE;});
+  b._drone_patrol     = sk(function(wps){cmd_patrol(Sk.ffi.remapToJs(wps));return NONE;});
+  b._drone_lawnmower  = sk(function(w,l,rows){cmd_lawnmower(N(w,8),N(l,6),N(rows,4));return NONE;});
+  b._drone_zigzag     = sk(function(w,d,n){cmd_zigzag(N(w,2),N(d,5),N(n,6));return NONE;});
+  b._drone_takephoto  = sk(function(){clog('take_photo()','li');beep(1200,.08);return NONE;});
+  b._drone_camerangle = sk(function(p,y){clog('camera_angle('+N(p)+','+N(y)+')','li');return NONE;});
+  // CV (simulated)
+  b._drone_detectface = sk(function(){var x=+(Math.random()*.4-.2).toFixed(3),y=+(Math.random()*.4-.2).toFixed(3);clog('detect_face() -> ('+x+','+y+')','li');return Sk.ffi.remapToPy({detected:true,x:x,y:y,confidence:.92,label:'human_face'});});
+  b._drone_detectgesture = sk(function(){var gs=['pointing','peace','thumbs_up','open_hand','fist','okay'];var g=gs[Math.floor(Math.random()*gs.length)];clog('detect_gesture() -> "'+g+'"','li');return Sk.ffi.remapToPy(g);});
+  b._drone_detectobject = sk(function(label){var lbl=S(label,'object');clog('detect_object("'+lbl+'")','li');return Sk.ffi.remapToPy({detected:Math.random()>.3,label:lbl,confidence:+(Math.random()*.3+.7).toFixed(2)});});
+  b._drone_followline = sk(function(path,height){cmd_followline(Sk.ffi.remapToJs(path),N(height,vState.z));return NONE;});
+  b._drone_followbody = sk(function(){clog('follow_body()','li');cmd_move('forward',2,1);return NONE;});
+  b._drone_detectcolor = sk(function(c){var cl=S(c,'red');clog('detect_color("'+cl+'")','li');return Sk.ffi.remapToPy({detected:Math.random()>.3,color:cl});});
+  b._drone_detectqr   = sk(function(){clog('detect_qr()','li');return Sk.ffi.remapToPy({detected:true,data:'DRONELAB-1'});});
+  b._drone_navroom    = sk(function(room){var r=S(room,'garage');clog('navigate_to_room("'+r+'")','li');cmd_goto(vState.x+3,vState.y+3,vState.z,1);return NONE;});
+  // Sensors
+  b._drone_getpos    = sk(function(){return Sk.ffi.remapToPy([+vState.x.toFixed(3),+vState.y.toFixed(3),+vState.z.toFixed(3)]);});
+  b._drone_getalt    = sk(function(){return Sk.ffi.remapToPy(+vState.z.toFixed(3));});
+  b._drone_getx      = sk(function(){return Sk.ffi.remapToPy(+vState.x.toFixed(3));});
+  b._drone_gety      = sk(function(){return Sk.ffi.remapToPy(+vState.y.toFixed(3));});
+  b._drone_getyaw    = sk(function(){return Sk.ffi.remapToPy(+vState.yaw.toFixed(1));});
+  b._drone_getspeed  = sk(function(){return Sk.ffi.remapToPy(vState.spd);});
+  b._drone_getbat    = sk(function(){return Sk.ffi.remapToPy(Math.round(vState.bat));});
+  b._drone_isflying  = sk(function(){return vState.flying?Sk.builtin.bool.true$:Sk.builtin.bool.false$;});
+  b._drone_distto    = sk(function(x,y,z){return Sk.ffi.remapToPy(Math.hypot(N(x)-vState.x,N(y)-vState.y,N(z)-vState.z));});
+  b._drone_status    = sk(function(){clog('x='+vState.x.toFixed(1)+' y='+vState.y.toFixed(1)+' z='+vState.z.toFixed(1)+' yaw='+vState.yaw.toFixed(0)+'deg bat='+Math.round(vState.bat)+'%','li');return NONE;});
+}
+
+// =============================================================
+// CRITICAL: builtinRead - returns pysimverse source
+// Checks filename.includes('pysimverse') - matches all Skulpt patterns
+// =============================================================
+function builtinRead(filename) {
+  if (filename.includes('pysimverse')) {
+    return PYSIMVERSE_SOURCE;
+  }
+  if (filename === 'time.py' || filename.includes('/time.js')) {
+    return 'def sleep(s):\n  pass\n';
+  }
+  if (Sk.builtinFiles && Sk.builtinFiles['files'] && Sk.builtinFiles['files'][filename] !== undefined) {
+    return Sk.builtinFiles['files'][filename];
+  }
+  throw new Error("File not found: '" + filename + "'");
+}
+
+// =============================================================
+// ANIMATION ENGINE
+// Executes command queue with smooth requestAnimationFrame
+// (Same pattern as working Google AI Studio useDrone.ts)
+// =============================================================
+var animRunning=false, shouldStopAnim=false;
+var droneX=0,droneY=0,droneZ=0,droneYaw=0,droneBat=100,droneFlying=false,droneFlipping=false;
+var propSpin=0,frameN=0;
+
+function executeQueue(queue) {
+  if (!queue.length || shouldStopAnim) {
+    animRunning=false;
+    clog('Mission complete!','ls');
+    beep(660,.2); setTimeout(function(){beep(880,.2);},240); setTimeout(function(){beep(1100,.3);},480);
+    setRunning(false);
+    return;
+  }
+  var cmd=queue.shift();
+  if(cmd.log) clog(cmd.log,'lc');
+
+  // Handle sounds
+  if(cmd.type==='goto'){
+    if(cmd.params.tz>.1&&droneZ<.1) { if(aOK){pO.frequency.setValueAtTime(62,aC.currentTime);pO.frequency.linearRampToValueAtTime(135,aC.currentTime+1.1);pG.gain.setValueAtTime(0,aC.currentTime);pG.gain.linearRampToValueAtTime(.08,aC.currentTime+1.1);} }
+    else if(cmd.params.tz<.1&&droneZ>.1) { if(aOK){pO.frequency.linearRampToValueAtTime(62,aC.currentTime+1);pG.gain.linearRampToValueAtTime(0,aC.currentTime+1.6);} }
+    else beep(520,.05,.06);
+  }
+
+  var startX=droneX,startY=droneY,startZ=droneZ,startYaw=droneYaw;
+  var startTime=performance.now(),dur=Math.max(50,cmd.dur);
+
+  function animate(ts) {
+    if(shouldStopAnim){animRunning=false;setRunning(false);return;}
+    var progress=Math.min((ts-startTime)/dur,1);
+    var e=progress<.5?2*progress*progress:-1+(4-2*progress)*progress; // ease
+
+    if(cmd.type==='goto'){
+      droneX=startX+(cmd.params.tx-startX)*e;
+      droneY=startY+(cmd.params.ty-startY)*e;
+      droneZ=startZ+(cmd.params.tz-startZ)*e;
+      droneYaw=startYaw+(cmd.params.tyaw-startYaw)*e;
+      droneFlying=droneZ>.05;
+    } else if(cmd.type==='flip'){
+      droneFlipping=progress<1;
+    }
+    // hover: just wait
+
+    droneBat=Math.max(0,droneBat-.0015);
+
+    if(progress<1) requestAnimationFrame(animate);
+    else {
+      droneFlipping=false;
+      if(cmd.type==='goto'){droneX=cmd.params.tx;droneY=cmd.params.ty;droneZ=cmd.params.tz;droneYaw=cmd.params.tyaw;droneFlying=droneZ>.05;}
+      executeQueue(queue);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// =============================================================
+// MAIN RENDER LOOP (Three.js)
+// =============================================================
+function loop() {
+  frameN++;
+
+  // Update drone 3D position
+  if(droneRoot){
+    droneRoot.position.set(droneX,droneZ,droneY); // Three.js Y=up
+    droneRoot.rotation.y=-droneYaw*Math.PI/180;
+    droneRoot.rotation.x=droneFlipping?Math.sin(frameN*.3)*Math.PI*1.8:0;
+    droneRoot.rotation.z=0;
+  }
+
+  // Spin propellers
+  var tSpd=droneFlying?(0.28+vState.spd*.05):0;
+  propSpin+=(tSpd-propSpin)*.09;
+  for(var i=0;i<propGs.length;i++) propGs[i].rotation.y+=propSpin*(i%2===0?1:-1);
+
+  // Drone glow
+  if(droneGlow) droneGlow.intensity=droneFlying?.55:0;
+
+  // Hum audio
+  if(frameN%30===0&&aOK){
+    if(droneFlying)setHum(.07,82+droneZ*3+propSpin*155);
+    else if(!animRunning)setHum(0,82);
+  }
+
+  // Trail
+  if(droneZ>.06) addTrail(droneX,droneZ,droneY);
+
+  // Camera soft-follow
+  camTgt.lerp(droneRoot?droneRoot.position:new THREE.Vector3(0,2,0),.025);
+  updateCam();
+
+  // HUD update
+  if(frameN%8===0){
+    document.getElementById('HX').textContent=droneX.toFixed(1);
+    document.getElementById('HY').textContent=droneY.toFixed(1);
+    document.getElementById('HZ').textContent=droneZ.toFixed(1)+'m';
+    document.getElementById('HYAW').textContent=((droneYaw%360+360)%360).toFixed(0);
+    var bat=Math.round(droneBat);
+    var bel=document.getElementById('HBAT');
+    bel.textContent=bat+'%';
+    bel.style.color=bat>50?'var(--grn)':bat>20?'var(--yel)':'var(--red)';
+    var statEl=document.getElementById('HSTAT');
+    statEl.textContent=droneFlying?(animRunning?'FLYING':'HOVERING'):'LANDED';
+    statEl.style.color=droneFlying?'var(--acc)':'var(--sub)';
+  }
+
+  rndr.render(scene,cam);
+  requestAnimationFrame(loop);
+}
+
+// =============================================================
+// CONSOLE
+// =============================================================
+var out=document.getElementById('OUT');
+function clog(msg,cls){
+  cls=cls||'lo';
+  var d=document.createElement('div');d.className=cls;d.textContent=msg;
+  out.appendChild(d);out.scrollTop=9999;
+}
+
+// =============================================================
+// RUN FUNCTION
+// Step 1: Run Python fast (just collects commands into commandQueue)
+// Step 2: Start animation on the collected queue
+// (Exact same pattern as Google AI Studio's working code)
+// =============================================================
+function doRun() {
+  if(animRunning) return;
+  initAudio();
+
+  // Reset everything
+  shouldStopAnim=false;
+  commandQueue=[];
+  vState={x:0,y:0,z:0,yaw:0,spd:1,bat:100,flying:false};
+  droneX=0;droneY=0;droneZ=0;droneYaw=0;droneBat=100;droneFlying=false;droneFlipping=false;
+  trailPts=[];
+  if(tGeo.attributes&&tGeo.attributes.position)tGeo.deleteAttribute('position');
+  if(droneRoot){droneRoot.position.set(0,0,0);droneRoot.rotation.set(0,0,0);}
+
+  out.innerHTML='';
+  clog('Running mission.py...','li');
+  setRunning(true);
+  mobSwitch('sim');
+
+  // Configure Skulpt
+  Sk.configure({
+    output: function(text) {
+      text.trim() && clog(text.trim(),'lo');
+    },
+    read: builtinRead,  // <-- THE KEY FIX
+    __future__: Sk.python3,
+    execLimit: 120000
+  });
+
+  // Register builtins BEFORE execution
+  setupSkulpt();
+
+  // Execute Python - it just fills commandQueue (fast, synchronous-ish)
+  Sk.misceval.asyncToPromise(function() {
+    return Sk.importMainWithBody('<stdin>', false, editor.getValue(), true);
+  }).then(function() {
+    clog('Python done. '+commandQueue.length+' commands queued.','ls');
+    if(commandQueue.length===0){
+      clog('No commands! Check your code.','lw');
+      setRunning(false);
+      return;
+    }
+    // Step 2: Now animate the collected queue
+    animRunning=true;
+    executeQueue(commandQueue.slice()); // pass a copy
+  }).catch(function(err) {
+    var msg=err.tp$str?err.tp$str().v:String(err);
+    clog('ERROR: '+msg,'le');
+    document.getElementById('DOT').className='err';
+    setRunning(false);
+  });
+}
+
+function doStop() {
+  shouldStopAnim=true; animRunning=false;
+  clog('Stopped.','lw'); setRunning(false);
+  if(aOK)setHum(0,82);
+}
+
+// =============================================================
+// UI WIRING
+// =============================================================
+function setRunning(r) {
+  animRunning=r;
+  document.getElementById('RUN').style.display=r?'none':'';
+  document.getElementById('STP').style.display=r?'':'none';
+  document.getElementById('DOT').className=r?'live':'';
+  document.getElementById('RICO').textContent=r?'stop':'play';
+}
+
+document.getElementById('RUN').onclick=doRun;
+document.getElementById('STP').onclick=doStop;
+document.getElementById('MB_RUN').onclick=doRun;
+
+// Desktop view tabs
+document.querySelectorAll('[data-v]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('[data-v]').forEach(function(b){b.classList.remove('on');});
+    btn.classList.add('on');
+    var v=btn.dataset.v,sp=document.getElementById('SP'),cp=document.getElementById('CP'),spl=document.getElementById('SPL');
+    if(v==='sim'){sp.style.cssText='flex:1;display:flex';cp.style.display='none';spl.style.display='none';}
+    else if(v==='code'){sp.style.display='none';cp.style.cssText='width:100%;display:flex';spl.style.display='none';}
+    else{sp.style.cssText='flex:1;display:flex';cp.style.cssText='width:46%;display:flex';spl.style.display='block';}
+    setTimeout(function(){resz();editor.refresh();},20);
+  });
+});
+
+// Mobile switch
+function mobSwitch(pane){
+  var sp=document.getElementById('SP'),cp=document.getElementById('CP');
+  sp.classList.remove('ma');cp.classList.remove('ma');
+  document.getElementById('MB_SIM').classList.remove('on');
+  document.getElementById('MB_CODE').classList.remove('on');
+  if(pane==='sim'){sp.classList.add('ma');document.getElementById('MB_SIM').classList.add('on');setTimeout(resz,20);}
+  else{cp.classList.add('ma');document.getElementById('MB_CODE').classList.add('on');setTimeout(function(){editor.refresh();},20);}
+}
+document.getElementById('MB_SIM').onclick=function(){mobSwitch('sim');};
+document.getElementById('MB_CODE').onclick=function(){mobSwitch('code');};
+document.getElementById('MB_MDL').onclick=function(){document.getElementById('FGLB').click();};
+
+// Save/Load Python
+function saveCode(){var b=new Blob([editor.getValue()],{type:'text/plain'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='mission.py';a.click();clog('Saved mission.py','ls');}
+function loadCode(){document.getElementById('FPY').click();}
+document.getElementById('SAVBTN').onclick=saveCode;document.getElementById('MSAV').onclick=saveCode;
+document.getElementById('LOADBTN').onclick=loadCode;document.getElementById('MLOD').onclick=loadCode;
+document.getElementById('FPY').addEventListener('change',function(){
+  if(!this.files[0])return;
+  var r=new FileReader();
+  r.onload=function(e){editor.setValue(e.target.result);clog('Loaded: '+this.files[0].name,'ls');}.bind(this);
+  r.readAsText(this.files[0]);this.value='';
+});
+
+// Upload 3D Model
+function loadGLB(file){
+  if(!file)return;clog('Loading '+file.name+'...','li');
+  new THREE.GLTFLoader().load(URL.createObjectURL(file),function(g){
+    customMdl=g.scene;var box=new THREE.Box3().setFromObject(customMdl);var sz=box.getSize(new THREE.Vector3());
+    customMdl.scale.setScalar(4/Math.max(sz.x,sz.y,sz.z,.01));customMdl.traverse(function(c){if(c.isMesh)c.castShadow=true;});
+    document.getElementById('DSEL').value='custom';setDrone('custom');clog('Model loaded: '+file.name,'ls');beep(880,.1);
+  },null,function(err){clog('Model error: '+err.message,'le');});
+}
+document.getElementById('UPBTN').onclick=function(){document.getElementById('FGLB').click();};
+document.getElementById('MMDL').onclick=function(){document.getElementById('FGLB').click();};
+document.getElementById('FGLB').addEventListener('change',function(){loadGLB(this.files[0]);this.value='';});
+document.getElementById('DSEL').onchange=function(){if(this.value==='custom'){document.getElementById('FGLB').click();return;}setDrone(this.value);};
+
+// Drag-drop
+document.body.addEventListener('dragover',function(e){e.preventDefault();document.getElementById('DRP').classList.add('show');});
+document.body.addEventListener('dragleave',function(e){if(!e.relatedTarget)document.getElementById('DRP').classList.remove('show');});
+document.body.addEventListener('drop',function(e){e.preventDefault();document.getElementById('DRP').classList.remove('show');var f=e.dataTransfer.files[0];if(f&&(f.name.endsWith('.glb')||f.name.endsWith('.gltf')))loadGLB(f);else clog('Drop a .glb or .gltf file','lw');});
+
+// Environment
+document.getElementById('ENVS').onchange=function(){setEnv(this.value);};
+
+// Theme
+var dark=true;
+document.getElementById('THBTN').onclick=function(){dark=!dark;document.documentElement.dataset.theme=dark?'dark':'light';document.getElementById('THBTN').textContent=dark?'Dark':'Light';editor.setOption('theme',dark?'dracula':'eclipse');};
+
+// Splitter
+var splEl=document.getElementById('SPL'),splDrag=false;
+splEl.addEventListener('mousedown',function(e){splDrag=true;splEl.classList.add('drag');e.preventDefault();});
+document.addEventListener('mousemove',function(e){if(!splDrag)return;var rect=document.getElementById('MAIN').getBoundingClientRect();var pct=Math.min(78,Math.max(22,(e.clientX-rect.left)/rect.width*100));document.getElementById('SP').style.cssText='flex:0 0 '+pct+'%;display:flex';resz();});
+document.addEventListener('mouseup',function(){splDrag=false;splEl.classList.remove('drag');});
+
+// Keyboard
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doRun();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCode();}
+});
+
+// =============================================================
+// CODEMIRROR
+// =============================================================
+var editor=CodeMirror.fromTextArea(document.getElementById('CODE'),{
+  mode:'python',theme:'dracula',lineNumbers:true,autoCloseBrackets:true,matchBrackets:true,
+  indentUnit:4,tabSize:4,lineWrapping:false,
+  extraKeys:{'Tab':function(cm){cm.execCommand('indentMore');},'Shift-Tab':function(cm){cm.execCommand('indentLess');},'Ctrl-Enter':doRun,'Cmd-Enter':doRun}
+});
+editor.setValue(DEFAULT_CODE);editor.setSize('100%','100%');
+
+// =============================================================
+// INIT
+// =============================================================
+setEnv('night');
+setDrone('mavic');
+resz();updateCam();
+if(window.innerWidth<=760)mobSwitch('code');
+clog('DroneLab Pro ready!','ls');
+clog('Press Run to fly your drone','li');
+clog('Ctrl+Enter: Run  |  Ctrl+S: Save  |  Drop .glb: 3D model','li');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
