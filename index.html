@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DroneLab Pro</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+[data-theme=dark]{--bg0:#07090f;--bg1:#0d1117;--bg2:#161b22;--bg3:#21262d;--bdr:#30363d;--txt:#f0f6fc;--sub:#8b949e;--acc:#00e5ff;--acc2:#7c3aed;--grn:#3fb950;--red:#f85149;--yel:#e3b341;--cbg:#0d1117;--cso:#060a0f;--hdr:#010409}
+[data-theme=light]{--bg0:#f6f8fa;--bg1:#fff;--bg2:#eaecef;--bg3:#d8dadd;--bdr:#d0d7de;--txt:#1f2328;--sub:#57606a;--acc:#0969da;--acc2:#8250df;--grn:#1a7f37;--red:#cf222e;--yel:#9a6700;--cbg:#fff;--cso:#f6f8fa;--hdr:#fff}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--txt);font-family:'SF Mono','JetBrains Mono','Fira Code',Consolas,monospace;font-size:13px;transition:background .25s,color .25s}
+#H{height:44px;display:flex;align-items:center;padding:0 10px;gap:7px;background:var(--hdr);border-bottom:1px solid var(--bdr);flex-shrink:0;z-index:100}
+#logo{display:flex;align-items:center;gap:7px;text-decoration:none}
+#logo-i{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#00e5ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+#logo-t{font-size:14px;font-weight:800}
+#logo-t b{color:var(--acc)}
+.tag{font-size:9px;padding:1px 5px;border-radius:6px;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;font-weight:700;letter-spacing:.8px}
+#HTABS{flex:1;display:flex;align-items:center;justify-content:center;gap:2px}
+.ht{height:32px;padding:0 12px;border:none;border-radius:5px;background:none;color:var(--sub);font-family:inherit;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.ht.on{color:var(--txt);border-bottom-color:var(--acc)}
+.ht:hover:not(.on){color:var(--txt)}
+#HR{display:flex;align-items:center;gap:5px}
+.hb{height:28px;padding:0 9px;border-radius:5px;border:1px solid var(--bdr);background:var(--bg3);color:var(--txt);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.hb:hover{border-color:var(--acc);color:var(--acc)}
+#RUN{background:var(--grn);border-color:var(--grn);color:#000;height:30px;padding:0 13px;font-size:12px}
+#RUN:hover{filter:brightness(1.12)}
+#STP{background:var(--red);border-color:var(--red);color:#fff;height:30px;display:none}
+#DOT{width:7px;height:7px;border-radius:50%;background:var(--bg3);flex-shrink:0;transition:all .3s}
+#DOT.live{background:var(--grn);box-shadow:0 0 8px var(--grn)}
+#DOT.err{background:var(--red);box-shadow:0 0 8px var(--red)}
+#MAIN{height:calc(100vh - 44px);display:flex;overflow:hidden}
+#SP{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg0)}
+#STB{display:flex;align-items:center;padding:4px 8px;gap:6px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;overflow-x:auto}
+#STB::-webkit-scrollbar{display:none}
+#STB label{font-size:9px;color:var(--sub);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.ss{height:24px;padding:0 6px;border-radius:4px;border:1px solid var(--bdr);background:var(--bg1);color:var(--txt);font-family:inherit;font-size:11px;cursor:pointer;flex-shrink:0}
+.ss:hover,.sb:hover{border-color:var(--acc)}
+.sb{height:24px;padding:0 8px;border-radius:4px;border:1px solid var(--bdr);background:var(--bg1);color:var(--txt);font-family:inherit;font-size:11px;cursor:pointer;flex-shrink:0}
+.sb:hover{color:var(--acc)}
+#CVW{flex:1;position:relative;overflow:hidden}
+canvas#C{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+canvas#C:active{cursor:grabbing}
+#HUD{position:absolute;top:8px;left:8px;pointer-events:none;display:flex;flex-direction:column;gap:4px}
+.hr{display:flex;gap:4px}
+.hc{display:flex;align-items:center;gap:4px;background:rgba(7,9,15,.85);border:1px solid rgba(48,54,61,.8);border-radius:5px;padding:3px 8px;backdrop-filter:blur(6px)}
+[data-theme=light] .hc{background:rgba(246,248,250,.88);border-color:var(--bdr)}
+.hl{font-size:8px;color:var(--sub);letter-spacing:.8px;text-transform:uppercase}
+.hv{font-size:11px;font-weight:700;color:var(--acc);min-width:28px}
+#HINT{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(139,148,158,.55);pointer-events:none;background:rgba(7,9,15,.55);padding:3px 10px;border-radius:16px;white-space:nowrap}
+#SPL{width:4px;background:var(--bdr);cursor:col-resize;flex-shrink:0;transition:background .2s}
+#SPL:hover,#SPL.drag{background:var(--acc)}
+#CP{width:46%;min-width:200px;display:flex;flex-direction:column;background:var(--cbg);border-left:1px solid var(--bdr)}
+#CTB{display:flex;align-items:center;padding:0 8px;height:32px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;gap:5px}
+.ct{height:26px;padding:0 10px;font-size:11px;color:var(--sub);border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;border-bottom:2px solid transparent;transition:all .15s}
+.ct.on{color:var(--acc);border-bottom-color:var(--acc)}
+.cd{width:5px;height:5px;border-radius:50%;background:var(--acc)}
+.ct-r{margin-left:auto;display:flex;gap:4px}
+.ct-r .hb{height:20px;font-size:10px;padding:0 6px}
+#CMW{flex:1;overflow:hidden;min-height:0}
+.CodeMirror{height:100%!important;font-size:13px!important;line-height:1.72!important;font-family:inherit!important}
+.CodeMirror-scroll{height:100%!important}
+[data-theme=dark] .CodeMirror{background:#0d1117!important}
+[data-theme=light] .CodeMirror{background:#fff!important}
+.CodeMirror-gutters{border-right:1px solid var(--bdr)!important}
+[data-theme=dark] .CodeMirror-gutters{background:#0d1117!important}
+[data-theme=light] .CodeMirror-gutters{background:#f6f8fa!important}
+#CON{height:148px;display:flex;flex-direction:column;border-top:1px solid var(--bdr);flex-shrink:0}
+#CONH{display:flex;align-items:center;padding:0 10px;height:26px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;gap:8px}
+#CONH span{font-size:10px;color:var(--sub);letter-spacing:.8px;text-transform:uppercase}
+#CONH button{margin-left:auto;background:none;border:1px solid var(--bdr);color:var(--sub);padding:1px 7px;font-size:10px;border-radius:4px;cursor:pointer;font-family:inherit}
+#CONH button:hover{border-color:var(--acc);color:var(--acc)}
+#OUT{flex:1;overflow-y:auto;padding:5px 10px;font-size:12px;line-height:1.75;background:var(--cso)}
+#OUT::-webkit-scrollbar{width:3px}
+#OUT::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+.lo{color:var(--txt)}.lc{color:var(--acc)}.ls{color:var(--grn)}.le{color:var(--red)}.lw{color:var(--yel)}.li{color:#79c0ff}
+#MN{display:none;height:52px;background:var(--hdr);border-top:1px solid var(--bdr);flex-shrink:0}
+.mb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;color:var(--sub);font-family:inherit;cursor:pointer;transition:color .2s;position:relative}
+.mb.on{color:var(--acc)}
+.mb.on::before{content:'';position:absolute;top:0;left:18%;right:18%;height:2px;background:var(--acc);border-radius:0 0 3px 3px}
+.mi{font-size:19px}.ml{font-size:9px;font-weight:700;letter-spacing:.4px}
+@media(max-width:760px){
+  #HTABS,.dsk{display:none!important}
+  #H{padding:0 8px;gap:5px}
+  #logo-t,.tag{display:none}
+  #RUN,#STP{padding:0 10px;height:28px;font-size:11px}
+  #MAIN{flex-direction:column;height:calc(100vh - 44px - 52px)}
+  #SP,#CP{width:100%!important;flex:1;border-left:none;display:none!important}
+  #SP.ma,#CP.ma{display:flex!important}
+  #SPL{display:none!important}
+  #MN{display:flex!important}
+  #STB{padding:3px 6px;gap:4px}
+  #CON{height:120px}
+}
+@media(min-width:761px){
+  #SP{display:flex!important}
+  #CP{display:flex!important}
+  #MN{display:none!important}
+}
+#SPL2{position:fixed;inset:0;z-index:9999;background:#07090f;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;animation:splOut .5s 1.6s ease forwards}
+@keyframes splOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+.si{font-size:50px;animation:hov 1.4s ease-in-out infinite}
+@keyframes hov{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.st{font-size:21px;font-weight:900;letter-spacing:6px;color:#00e5ff}
+.ss2{font-size:9px;color:#8b949e;letter-spacing:3px;animation:blk 1s infinite}
+@keyframes blk{0%,100%{opacity:1}50%{opacity:.25}}
+#DRP{position:fixed;inset:0;z-index:500;background:rgba(0,229,255,.08);border:3px dashed var(--acc);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--acc);font-size:18px}
+#DRP.show{display:flex}
+</style>
+</head>
+<body>
+
+<div id="SPL2">
+  <div class="si">&#x1F681;</div>
+  <div class="st">DRONELAB PRO</div>
+  <div class="ss2">LOADING...</div>
+</div>
+<div id="DRP"><div>&#x1F4E6;</div><div style="font-size:13px">Drop .glb / .gltf to load drone</div></div>
+
+<div id="H">
+  <a id="logo" href="#"><div id="logo-i">&#x1F681;</div><div id="logo-t">Drone<b>Lab</b></div></a>
+  <div class="tag">PRO</div>
+  <div id="HTABS">
+    <button class="ht on" data-v="both">&#x2B1B; Split</button>
+    <button class="ht" data-v="sim">&#x1F310; Sim</button>
+    <button class="ht" data-v="code">&#x1F4DD; Code</button>
+  </div>
+  <div id="HR">
+    <div id="DOT"></div>
+    <button class="hb dsk" id="SAVBTN">&#x1F4BE; Save</button>
+    <button class="hb dsk" id="LOADBTN">&#x1F4C2; Load</button>
+    <button class="hb dsk" id="UPBTN">&#x1F4E6; Model</button>
+    <button class="hb" id="THBTN">&#x1F319;</button>
+    <button class="hb" id="RUN">&#x25B6; Run</button>
+    <button class="hb" id="STP">&#x26D4; Stop</button>
+  </div>
+</div>
+
+<input type="file" id="FPY" accept=".py" style="display:none">
+<input type="file" id="FGLB" accept=".glb,.gltf" style="display:none">
+
+<div id="MAIN">
+  <div id="SP" class="ma">
+    <div id="STB">
+      <label>ENV</label>
+      <select class="ss" id="ENVS">
+        <option value="night" selected>Night</option>
+        <option value="day">Day</option>
+        <option value="afternoon">Afternoon</option>
+        <option value="evening">Evening</option>
+        <option value="indoor">Indoor</option>
+        <option value="grass">Grass</option>
+        <option value="road">Road</option>
+        <option value="mountain">Mountain</option>
+      </select>
+      <label>DRONE</label>
+      <select class="ss" id="DSEL">
+        <option value="mavic">DJI Mavic</option>
+        <option value="racing">Racing</option>
+        <option value="delivery">Delivery</option>
+        <option value="custom">Custom GLB</option>
+      </select>
+      <button class="sb" id="RCAM">Reset View</button>
+    </div>
+    <div id="CVW">
+      <canvas id="C"></canvas>
+      <div id="HUD">
+        <div class="hr">
+          <div class="hc"><span class="hl">X</span><span class="hv" id="HX">0.0</span></div>
+          <div class="hc"><span class="hl">Y</span><span class="hv" id="HY">0.0</span></div>
+          <div class="hc"><span class="hl">ALT</span><span class="hv" id="HZ">0.0m</span></div>
+        </div>
+        <div class="hr">
+          <div class="hc"><span class="hl">YAW</span><span class="hv" id="HYAW">0</span></div>
+          <div class="hc"><span class="hl">SPD</span><span class="hv" id="HSPD">-</span></div>
+          <div class="hc"><span class="hl">BAT</span><span class="hv" id="HBAT" style="color:var(--grn)">100%</span></div>
+        </div>
+      </div>
+      <div id="HINT">Drag: orbit | Scroll: zoom | Right-drag: pan | Pinch: zoom</div>
+    </div>
+  </div>
+
+  <div id="SPL"></div>
+
+  <div id="CP">
+    <div id="CTB">
+      <div class="ct on"><div class="cd"></div>mission.py</div>
+      <div class="ct-r">
+        <button class="hb" id="MSAV">&#x1F4BE;</button>
+        <button class="hb" id="MLOD">&#x1F4C2;</button>
+        <button class="hb" id="MMDL">&#x1F4E6;</button>
+      </div>
+    </div>
+    <div id="CMW"><textarea id="CODE"></textarea></div>
+    <div id="CON">
+      <div id="CONH">
+        <span>Console</span>
+        <button onclick="document.getElementById('OUT').innerHTML=''">Clear</button>
+      </div>
+      <div id="OUT"></div>
+    </div>
+  </div>
+</div>
+
+<div id="MN">
+  <button class="mb on" id="MB_SIM"><span class="mi">&#x1F310;</span><span class="ml">SIM</span></button>
+  <button class="mb" id="MB_CODE"><span class="mi">&#x1F4DD;</span><span class="ml">CODE</span></button>
+  <button class="mb" id="MB_RUN"><span class="mi" id="RICO">&#x25B6;</span><span class="ml">RUN</span></button>
+  <button class="mb" id="MB_MDL"><span class="mi">&#x1F4E6;</span><span class="ml">MODEL</span></button>
+</div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────────────
+// DEFAULT PYTHON CODE
+// ─────────────────────────────────────────────────────────────────
+var DEFAULT_CODE = [
+  "# DroneLab Pro - PySimverse API",
+  "# Same as FreeCodeCamp tutorial by Murtaza Hassan",
+  "from pysimverse import Drone",
+  "import math",
+  "",
+  "drone = Drone()",
+  "drone.connect()",
+  "",
+  "# Basic Square Flight",
+  "drone.takeoff(height=5)",
+  "",
+  "for i in range(4):",
+  "    drone.move_forward(distance=3, speed=1.5)",
+  "    drone.rotate_cw(degrees=90)",
+  "",
+  "# Sensor Readings",
+  "pos = drone.get_position()",
+  "print('Position: x=' + str(pos[0]) + ' y=' + str(pos[1]) + ' z=' + str(pos[2]))",
+  "print('Battery: ' + str(drone.get_battery()) + '%')",
+  "",
+  "# Spiral",
+  "drone.move_up(distance=2)",
+  "drone.spiral(radius=2, height=3, turns=2)",
+  "",
+  "# Orbit",
+  "drone.go_to(x=0, y=0, z=6)",
+  "drone.orbit(cx=0, cy=0, radius=3, laps=1)",
+  "",
+  "# Flip stunt",
+  "drone.go_to(x=0, y=0, z=5)",
+  "drone.flip('forward')",
+  "drone.hover(seconds=1)",
+  "",
+  "# CV Mission (FreeCodeCamp advanced)",
+  "face = drone.detect_face()",
+  "print('Face: ' + str(face['detected']))",
+  "",
+  "gesture = drone.detect_gesture()",
+  "print('Gesture: ' + str(gesture))",
+  "",
+  "drone.follow_line(path=[[0,0],[2,0],[4,2],[6,2]], height=2)",
+  "",
+  "# Return home",
+  "drone.return_home()",
+  "drone.land()",
+  "print('Mission complete!')"
+].join('\n');
+
+// ─────────────────────────────────────────────────────────────────
+// PYSIMVERSE MODULE - returned as Python source to Skulpt read()
+// This is the KEY FIX: Skulpt calls read("pysimverse.py")
+// ─────────────────────────────────────────────────────────────────
+var PYSIMVERSE_PY = [
+  "class Drone:",
+  "    def __init__(self): pass",
+  "    def connect(self): __d_connect()",
+  "    def disconnect(self): __d_disconnect()",
+  "    def takeoff(self, height=3): __d_takeoff(height)",
+  "    def land(self): __d_land()",
+  "    def hover(self, seconds=1): __d_hover(seconds)",
+  "    def return_home(self): __d_return_home()",
+  "    def emergency_land(self): __d_emergency_land()",
+  "    def move_forward(self, distance=1, speed=1): __d_move_forward(distance, speed)",
+  "    def move_backward(self, distance=1, speed=1): __d_move_backward(distance, speed)",
+  "    def move_left(self, distance=1, speed=1): __d_move_left(distance, speed)",
+  "    def move_right(self, distance=1, speed=1): __d_move_right(distance, speed)",
+  "    def move_up(self, distance=1): __d_move_up(distance)",
+  "    def move_down(self, distance=1): __d_move_down(distance)",
+  "    def go_to(self, x=0, y=0, z=0, speed=1): __d_go_to(x, y, z, speed)",
+  "    def set_position(self, x=0, y=0, z=0, speed=1): __d_go_to(x, y, z, speed)",
+  "    def rotate_cw(self, degrees=90): __d_rotate_cw(degrees)",
+  "    def rotate_ccw(self, degrees=90): __d_rotate_ccw(degrees)",
+  "    def set_yaw(self, angle=0): __d_set_yaw(angle)",
+  "    def face(self, direction='north'): __d_face(direction)",
+  "    def set_speed(self, speed=1): __d_set_speed(speed)",
+  "    def flip(self, direction='forward'): __d_flip(direction)",
+  "    def flip_forward(self): __d_flip('forward')",
+  "    def flip_backward(self): __d_flip('backward')",
+  "    def flip_left(self): __d_flip('left')",
+  "    def flip_right(self): __d_flip('right')",
+  "    def orbit(self, cx=0, cy=0, radius=2, laps=1, direction='cw'): __d_orbit(cx, cy, radius, laps, direction)",
+  "    def circle(self, radius=2, laps=1): __d_circle(radius, laps)",
+  "    def spiral(self, radius=2, height=4, turns=2): __d_spiral(radius, height, turns)",
+  "    def figure_8(self, size=3): __d_figure_8(size)",
+  "    def square(self, size=2): __d_square(size)",
+  "    def triangle(self, size=2): __d_triangle(size)",
+  "    def patrol(self, waypoints): __d_patrol(waypoints)",
+  "    def lawnmower(self, width=8, length=6, rows=4): __d_lawnmower(width, length, rows)",
+  "    def zigzag(self, width=2, distance=5, steps=6): __d_zigzag(width, distance, steps)",
+  "    def take_photo(self): __d_take_photo()",
+  "    def set_camera_angle(self, pitch=0, yaw=0): __d_camera_angle(pitch, yaw)",
+  "    def detect_face(self): return __d_detect_face()",
+  "    def detect_gesture(self): return __d_detect_gesture()",
+  "    def detect_object(self, label='object'): return __d_detect_object(label)",
+  "    def follow_line(self, path, height=0): __d_follow_line(path, height)",
+  "    def follow_body(self): __d_follow_body()",
+  "    def detect_color(self, color='red'): return __d_detect_color(color)",
+  "    def detect_qr(self): return __d_detect_qr()",
+  "    def navigate_to_room(self, room='garage'): __d_navigate_to_room(room)",
+  "    def get_position(self): return __d_get_position()",
+  "    def get_altitude(self): return __d_get_altitude()",
+  "    def get_x(self): return __d_get_x()",
+  "    def get_y(self): return __d_get_y()",
+  "    def get_yaw(self): return __d_get_yaw()",
+  "    def get_speed(self): return __d_get_speed()",
+  "    def get_battery(self): return __d_get_battery()",
+  "    def is_flying(self): return __d_is_flying()",
+  "    def distance_to(self, x=0, y=0, z=0): return __d_distance_to(x, y, z)",
+  "    def print_status(self): __d_print_status()",
+  "    def log(self, msg): print(str(msg))"
+].join('\n');
+
+// ─────────────────────────────────────────────────────────────────
+// THREE.JS SETUP
+// ─────────────────────────────────────────────────────────────────
+var cvs = document.getElementById('C');
+var cvw = document.getElementById('CVW');
+var rndr = new THREE.WebGLRenderer({canvas: cvs, antialias: true});
+rndr.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+rndr.shadowMap.enabled = true;
+rndr.shadowMap.type = THREE.PCFSoftShadowMap;
+rndr.toneMapping = THREE.ACESFilmicToneMapping;
+rndr.toneMappingExposure = 1.0;
+
+var scene = new THREE.Scene();
+var cam = new THREE.PerspectiveCamera(50, 1, 0.05, 600);
+var camR = 20, camTh = 42, camPh = 30;
+var camTgt = new THREE.Vector3(0, 2, 0);
+var panOff = new THREE.Vector3();
+
+function updateCam() {
+  var ph = camPh * Math.PI / 180;
+  var th = camTh * Math.PI / 180;
+  cam.position.set(
+    camTgt.x + panOff.x + camR * Math.cos(ph) * Math.sin(th),
+    camTgt.y + panOff.y + camR * Math.sin(ph),
+    camTgt.z + panOff.z + camR * Math.cos(ph) * Math.cos(th)
+  );
+  cam.lookAt(camTgt.x + panOff.x, camTgt.y + panOff.y, camTgt.z + panOff.z);
+}
+
+function resz() {
+  var W = cvw.clientWidth || 1;
+  var H = cvw.clientHeight || 1;
+  rndr.setSize(W, H);
+  cam.aspect = W / H;
+  cam.updateProjectionMatrix();
+}
+window.addEventListener('resize', resz);
+new ResizeObserver(resz).observe(cvw);
+
+// Orbit controls
+var dn = false, lx = 0, ly = 0, rmb = false, pd = 0;
+cvs.addEventListener('mousedown', function(e) { dn = true; lx = e.clientX; ly = e.clientY; rmb = e.button === 2; e.preventDefault(); });
+cvs.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+document.addEventListener('mousemove', function(e) {
+  if (!dn) return;
+  var dx = e.clientX - lx, dy = e.clientY - ly;
+  lx = e.clientX; ly = e.clientY;
+  if (rmb) { panOff.x -= dx * .022; panOff.z -= dy * .022; }
+  else { camTh -= dx * .38; camPh = Math.max(3, Math.min(88, camPh + dy * .30)); }
+});
+document.addEventListener('mouseup', function() { dn = false; });
+cvs.addEventListener('wheel', function(e) { camR = Math.max(3, Math.min(80, camR + e.deltaY * .045)); }, {passive: true});
+cvs.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (e.touches.length === 1) { dn = true; lx = e.touches[0].clientX; ly = e.touches[0].clientY; }
+  if (e.touches.length === 2) { dn = false; pd = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+}, {passive: false});
+cvs.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (e.touches.length === 1 && dn) {
+    camTh -= (e.touches[0].clientX - lx) * .42;
+    camPh = Math.max(3, Math.min(88, camPh + (e.touches[0].clientY - ly) * .32));
+    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
+  }
+  if (e.touches.length === 2) {
+    var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    camR = Math.max(3, Math.min(80, camR - (d - pd) * .05)); pd = d;
+  }
+}, {passive: false});
+cvs.addEventListener('touchend', function() { dn = false; });
+document.getElementById('RCAM').onclick = function() { camR = 20; camTh = 42; camPh = 30; panOff.set(0, 0, 0); camTgt.set(0, 2, 0); };
+
+// ─────────────────────────────────────────────────────────────────
+// ENVIRONMENT BUILDER
+// ─────────────────────────────────────────────────────────────────
+var envObjs = [], sunL, fillL, ambL;
+
+var ENVS = {
+  night:    {sky: 0x020508, fog: 0x060a12, fd: .022, si: .35, sc: 0x5577aa, sp: [12, 22, 8],  ai: .18, ac: 0x1a2244},
+  day:      {sky: 0x5bb8e8, fog: 0x99d4ef, fd: .010, si: 1.2, sc: 0xfffbe0, sp: [22, 44, 18], ai: .65, ac: 0xfff5dd},
+  afternoon:{sky: 0x5a9ec8, fog: 0x88c8e0, fd: .011, si: 1.0, sc: 0xffd888, sp: [10, 28, 22], ai: .55, ac: 0xffeedd},
+  evening:  {sky: 0x16082e, fog: 0x2e1222, fd: .020, si: .65, sc: 0xff5522, sp: [-4, 9, 22],  ai: .30, ac: 0xff8844},
+  indoor:   {sky: 0x181824, fog: 0x181824, fd: .050, si: .85, sc: 0xfff5cc, sp: [0, 12, 0],   ai: .55, ac: 0xfff2cc},
+  grass:    {sky: 0x5bbee2, fog: 0x88d8ee, fd: .010, si: 1.1, sc: 0xffffff, sp: [16, 38, 12], ai: .60, ac: 0xddfadd},
+  road:     {sky: 0x78b0cc, fog: 0x99c8de, fd: .011, si: 1.0, sc: 0xffffff, sp: [22, 32, 12], ai: .52, ac: 0xddeeff},
+  mountain: {sky: 0x325a74, fog: 0x224466, fd: .016, si: .92, sc: 0xffeebb, sp: [22, 44, 6],  ai: .42, ac: 0xddeeff}
+};
+
+function addMesh(geo, color, rx, ry, rz, x, y, z) {
+  rx = rx || 0; ry = ry || 0; rz = rz || 0; x = x || 0; y = y || 0; z = z || 0;
+  var m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color: color}));
+  m.rotation.set(rx, ry, rz); m.position.set(x, y, z);
+  m.castShadow = true; m.receiveShadow = true;
+  return m;
+}
+
+function makeStars(n, range, ymin, ymax) {
+  var sv = [];
+  for (var i = 0; i < n; i++) {
+    sv.push((Math.random() - .5) * range, Math.random() * (ymax - ymin) + ymin, (Math.random() - .5) * range);
+  }
+  var sg = new THREE.BufferGeometry();
+  sg.setAttribute('position', new THREE.Float32BufferAttribute(sv, 3));
+  return new THREE.Points(sg, new THREE.PointsMaterial({color: 0xffffff, size: .22, transparent: true, opacity: .92}));
+}
+
+function setEnv(key) {
+  envObjs.forEach(function(o) { scene.remove(o); }); envObjs = [];
+  var E = ENVS[key] || ENVS.night;
+  rndr.setClearColor(E.sky);
+  scene.background = new THREE.Color(E.sky);
+  scene.fog = new THREE.FogExp2(E.fog, E.fd);
+  if (sunL) scene.remove(sunL);
+  if (fillL) scene.remove(fillL);
+  if (ambL) scene.remove(ambL);
+  ambL = new THREE.AmbientLight(E.ac, E.ai);
+  sunL = new THREE.DirectionalLight(E.sc, E.si);
+  sunL.position.set(E.sp[0], E.sp[1], E.sp[2]); sunL.castShadow = true;
+  sunL.shadow.mapSize.set(2048, 2048);
+  sunL.shadow.camera.left = sunL.shadow.camera.bottom = -45;
+  sunL.shadow.camera.right = sunL.shadow.camera.top = 45;
+  sunL.shadow.camera.near = .5; sunL.shadow.camera.far = 130;
+  fillL = new THREE.PointLight(0x00e5ff, .4, 40); fillL.position.set(-8, 10, -8);
+  scene.add(ambL, sunL, fillL);
+
+  function add(o) { scene.add(o); envObjs.push(o); }
+  function floor(color, s) { s = s || 120; return addMesh(new THREE.PlaneGeometry(s, s), color, -Math.PI/2, 0, 0, 0, 0, 0); }
+
+  if (key === 'night') {
+    add(floor(0x060810));
+    add(new THREE.GridHelper(100, 50, 0x0d2030, 0x0a1820));
+    add(makeStars(800, 300, 15, 90));
+    var moon = new THREE.Mesh(new THREE.SphereGeometry(3.5, 14, 10), new THREE.MeshBasicMaterial({color: 0xeeeedd}));
+    moon.position.set(-50, 56, -65); add(moon);
+    for (var i = -2; i <= 2; i++) {
+      add(addMesh(new THREE.CylinderGeometry(.1, .1, 5.5, 6), 0x334455, 0, 0, 0, i * 10, 2.75, 16));
+      var bulb = new THREE.Mesh(new THREE.SphereGeometry(.3, 7, 7), new THREE.MeshBasicMaterial({color: 0xffee88}));
+      bulb.position.set(i * 10, 5.65, 16); add(bulb);
+      var pl = new THREE.PointLight(0xffee88, .9, 14); pl.position.set(i * 10, 5.3, 16); add(pl);
+    }
+  } else if (key === 'day' || key === 'afternoon') {
+    add(floor(0x4a9038));
+    var g = new THREE.GridHelper(100, 50, 0x2a7020, 0x2a7020);
+    g.material.opacity = .28; g.material.transparent = true; add(g);
+    for (var t = 0; t < 10; t++) {
+      var tx = (Math.random() - .5) * 80, tz = (Math.random() - .5) * 80;
+      if (Math.abs(tx) < 10 && Math.abs(tz) < 10) continue;
+      add(addMesh(new THREE.CylinderGeometry(.3, .5, 3, 7), 0x5a3200, 0, 0, 0, tx, 1.5, tz));
+      add(addMesh(new THREE.ConeGeometry(1.8, 3.5, 8), 0x267a26, 0, 0, 0, tx, 4.5, tz));
+    }
+    for (var c = 0; c < 8; c++) {
+      add(addMesh(new THREE.SphereGeometry(2 + Math.random() * 3, 8, 6), 0xffffff, 0, 0, 0, (Math.random() - .5) * 80, 25 + Math.random() * 15, (Math.random() - .5) * 80));
+    }
+  } else if (key === 'evening') {
+    add(floor(0x2a1a10));
+    add(makeStars(600, 300, 18, 90));
+    var gh = new THREE.Mesh(new THREE.PlaneGeometry(140, 20), new THREE.MeshBasicMaterial({color: 0xff4400, transparent: true, opacity: .18, side: THREE.DoubleSide}));
+    gh.rotation.y = Math.PI / 2; gh.position.set(-50, 6, 0); add(gh);
+  } else if (key === 'indoor') {
+    add(floor(0x8a7a68, 22));
+    var rm = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 24), new THREE.MeshLambertMaterial({color: 0xc8b898, side: THREE.BackSide}));
+    rm.position.y = 7; add(rm);
+    var cf = new THREE.Mesh(new THREE.BoxGeometry(4, .08, 4), new THREE.MeshBasicMaterial({color: 0xfff6ee}));
+    cf.position.set(0, 13.94, 0); add(cf);
+    var cl = new THREE.PointLight(0xfff4cc, 1.6, 28); cl.position.set(0, 12, 0); add(cl);
+    add(addMesh(new THREE.BoxGeometry(3, 1.4, 5), 0x4a3218, 0, 0, 0, 8.5, .7, 0));
+    add(new THREE.GridHelper(20, 20, 0x9a8a78, 0x9a8a78));
+  } else if (key === 'grass') {
+    add(floor(0x3a8a22));
+    for (var f = 0; f < 30; f++) {
+      var fx = (Math.random() - .5) * 80, fz = (Math.random() - .5) * 80;
+      var col = Math.random() > .5 ? 0xffdd44 : 0xff6699;
+      add(addMesh(new THREE.SphereGeometry(.35, 6, 5), col, 0, 0, 0, fx, .35, fz));
+    }
+    add(makeStars(200, 200, 60, 120));
+  } else if (key === 'road') {
+    add(floor(0x557766));
+    add(addMesh(new THREE.PlaneGeometry(9, 100), 0x3a3a3a, -Math.PI/2, 0, 0, 0, .01, 0));
+    for (var d = -9; d <= 9; d++) {
+      add(addMesh(new THREE.PlaneGeometry(.28, 3.2), 0xffff44, -Math.PI/2, 0, 0, 0, .02, d * 6));
+    }
+    var carColors = [0xcc3333, 0x3366cc, 0xcccc33, 0x33cc66, 0xcc6633];
+    var carZ = [-22, -8, 6, 20, 35];
+    for (var ci = 0; ci < carZ.length; ci++) {
+      var cs = ci % 2 === 0 ? 3 : -3;
+      add(addMesh(new THREE.BoxGeometry(2.2, 1.1, 3.8), carColors[ci], 0, 0, 0, cs, .6, carZ[ci]));
+      add(addMesh(new THREE.BoxGeometry(1.7, .85, 2.2), carColors[ci], 0, 0, 0, cs, 1.6, carZ[ci]));
+    }
+    add(new THREE.GridHelper(120, 60, 0x446655, 0x446655));
+  } else if (key === 'mountain') {
+    add(floor(0x4a6240, 200));
+    add(new THREE.GridHelper(120, 60, 0x3a5230, 0x3a5230));
+    var peaks = [[40, -42, 9, 26], [36, 48, 7, 20], [58, 22, 6, 18], [-52, -28, 11, 30], [-38, 42, 8, 22]];
+    for (var pi = 0; pi < peaks.length; pi++) {
+      var pk = peaks[pi];
+      add(addMesh(new THREE.ConeGeometry(pk[2], pk[3], 9), 0x5a6458, 0, 0, 0, pk[0], pk[3]/2, pk[1]));
+      add(addMesh(new THREE.ConeGeometry(pk[2]*.28, pk[3]*.3, 9), 0xeeeeff, 0, 0, 0, pk[0], pk[3]*.86, pk[1]));
+    }
+    for (var mt = 0; mt < 16; mt++) {
+      var mx = (Math.random() - .5) * 48, mz = (Math.random() - .5) * 48;
+      add(addMesh(new THREE.ConeGeometry(1.2 + Math.random() * .8, 4 + Math.random() * 3, 7), 0x2a6a2a, 0, 0, 0, mx, 2.5, mz));
+    }
+    add(makeStars(400, 300, 30, 100));
+  }
+
+  // Landing pad (always)
+  var lp = new THREE.Mesh(new THREE.CircleGeometry(1.7, 32), new THREE.MeshBasicMaterial({color: 0x00e5ff, transparent: true, opacity: .16}));
+  lp.rotation.x = -Math.PI/2; lp.position.y = .01; add(lp);
+  var lr = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.82, 32), new THREE.MeshBasicMaterial({color: 0x00e5ff, transparent: true, opacity: .55, side: THREE.DoubleSide}));
+  lr.rotation.x = -Math.PI/2; lr.position.y = .015; add(lr);
+  // XYZ axes
+  var axPts = [
+    [new THREE.Vector3(0,.01,0), new THREE.Vector3(3.5,.01,0), 0xf85149],
+    [new THREE.Vector3(0,.01,0), new THREE.Vector3(0,3.5,0), 0x3fb950],
+    [new THREE.Vector3(0,.01,0), new THREE.Vector3(0,.01,3.5), 0x00e5ff]
+  ];
+  for (var ai = 0; ai < axPts.length; ai++) {
+    var axLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([axPts[ai][0], axPts[ai][1]]), new THREE.LineBasicMaterial({color: axPts[ai][2]}));
+    add(axLine);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// DRONE MODELS
+// ─────────────────────────────────────────────────────────────────
+var droneRoot = null, propGs = [], droneGlow = null, customMdl = null;
+
+function mkm(geo, mat, rx, ry, rz, x, y, z) {
+  rx = rx||0; ry = ry||0; rz = rz||0; x = x||0; y = y||0; z = z||0;
+  var m = new THREE.Mesh(geo, mat); m.rotation.set(rx,ry,rz); m.position.set(x,y,z);
+  m.castShadow = true; return m;
+}
+function mp(color, shin, spec, transp, opa, side) {
+  return new THREE.MeshPhongMaterial({
+    color: color, shininess: shin||100, specular: spec||0,
+    transparent: transp||false, opacity: opa!==undefined?opa:1, side: side||THREE.FrontSide
+  });
+}
+
+function buildMavic() {
+  var G = new THREE.Group();
+  var mBody = mp(0x1e2a38, 160, 0x5588bb);
+  var mDark = mp(0x0e1520, 80);
+  var mArm  = mp(0x16202e, 60);
+  var mMot  = mp(0x080e18, 220, 0x336699);
+  var mProp = mp(0x2a3848, 30, 0, true, .82, THREE.DoubleSide);
+  var mGlass= mp(0x001828, 280, 0x88ccff, true, .65);
+  var mLED  = new THREE.MeshBasicMaterial({color: 0x00e5ff});
+  var mRed  = new THREE.MeshBasicMaterial({color: 0xff2222});
+  var mGrn  = new THREE.MeshBasicMaterial({color: 0x22ff55});
+
+  G.add(mkm(new THREE.BoxGeometry(2.3,.3,1.1), mBody));
+  G.add(mkm(new THREE.BoxGeometry(1.1,.2,.68), mBody, 0,0,0, -.1,.25,0));
+  G.add(mkm(new THREE.BoxGeometry(.25,.2,.88), mDark, 0,0,0, .97,-.04,0));
+  G.add(mkm(new THREE.BoxGeometry(.52,.04,.05), mLED, 0,0,0, .72,.18,0));
+
+  var mPosArr = [[1.85,0,-1.85],[1.85,0,1.85],[-1.85,0,-1.85],[-1.85,0,1.85]];
+  propGs = [];
+  for (var i = 0; i < mPosArr.length; i++) {
+    var mp2 = mPosArr[i];
+    var mx = mp2[0], mz = mp2[2];
+    var al = Math.sqrt(mx*mx + mz*mz) * .88;
+    var aYaw = Math.atan2(mx, mz);
+    G.add(mkm(new THREE.BoxGeometry(al,.09,.09), mArm, 0,aYaw,0, mx*.5,0,mz*.5));
+    G.add(mkm(new THREE.CylinderGeometry(.24,.24,.14,14), mMot, 0,0,0, mx,.07,mz));
+    G.add(mkm(new THREE.CylinderGeometry(.15,.2,.1,12), mMot, 0,0,0, mx,.17,mz));
+    G.add(mkm(new THREE.CylinderGeometry(.04,.04,.12,8), mMot, 0,0,0, mx,.26,mz));
+    var pg = new THREE.Group(); pg.position.set(mx,.3,mz);
+    for (var b = 0; b < 2; b++) {
+      var blade = mkm(new THREE.BoxGeometry(1.72,.02,.14), mProp, 0, b*Math.PI/2, 0.065);
+      pg.add(blade);
+    }
+    var cap = new THREE.Mesh(new THREE.CylinderGeometry(.06,.09,.06,8), mMot); pg.add(cap);
+    G.add(pg); propGs.push(pg);
+    var tipMat = i < 2 ? mGrn : mRed;
+    G.add(mkm(new THREE.SphereGeometry(.07,6,6), tipMat, 0,0,0, mx,.31,mz));
+  }
+
+  // Landing gear
+  var lzArr = [-0.58, 0.58];
+  for (var li = 0; li < lzArr.length; li++) {
+    var lz = lzArr[li];
+    G.add(mkm(new THREE.BoxGeometry(1.85,.05,.07), mArm, 0,0,0, 0,-.28,lz));
+    var lxArr = [-0.68, 0.68];
+    for (var lxi = 0; lxi < lxArr.length; lxi++) {
+      G.add(mkm(new THREE.CylinderGeometry(.055,.055,.3,6), mArm, 0,0,0, lxArr[lxi],-.14,lz));
+    }
+  }
+
+  // Camera gimbal
+  G.add(mkm(new THREE.SphereGeometry(.17,10,8), mDark, 0,0,0, .9,-.23,0));
+  G.add(mkm(new THREE.SphereGeometry(.11,10,8), mGlass, 0,0,0, 1.0,-.23,0));
+
+  droneGlow = new THREE.PointLight(0x00e5ff, 0, 6);
+  droneGlow.position.set(0,-1.2,0); G.add(droneGlow);
+  G.traverse(function(c) { if (c.isMesh) c.castShadow = true; });
+  return G;
+}
+
+function buildRacing() {
+  var G = new THREE.Group();
+  var mF = mp(0x1a0806,120,0xff3300);
+  var mA = mp(0x0a0808);
+  var mP = mp(0xff2222,30,0,true,.82,THREE.DoubleSide);
+  G.add(mkm(new THREE.CylinderGeometry(.35,.35,.1,5), mF));
+  propGs = [];
+  var rp = [[1,0,-1],[1,0,1],[-1,0,-1],[-1,0,1]];
+  for (var ri = 0; ri < rp.length; ri++) {
+    var rmx = rp[ri][0], rmz = rp[ri][2];
+    G.add(mkm(new THREE.BoxGeometry(Math.SQRT2*.9,.07,.07), mA, 0,Math.atan2(rmx,rmz),0, rmx*.5,0,rmz*.5));
+    var pg = new THREE.Group(); pg.position.set(rmx,.12,rmz);
+    for (var b = 0; b < 2; b++) pg.add(mkm(new THREE.BoxGeometry(1.3,.02,.11), mP, 0,b*Math.PI/2,0));
+    G.add(pg); propGs.push(pg);
+  }
+  droneGlow = new THREE.PointLight(0xff3300,0,4); droneGlow.position.set(0,-.5,0); G.add(droneGlow);
+  G.traverse(function(c) { if (c.isMesh) c.castShadow = true; });
+  return G;
+}
+
+function buildDelivery() {
+  var G = new THREE.Group();
+  var mB = mp(0xf0eee0,110,0x4488aa);
+  var mA = mp(0xc8c2b8);
+  var mP = mp(0x8899aa,30,0,true,.8,THREE.DoubleSide);
+  var mBox = mp(0x2266cc,80,0x88aacc);
+  G.add(mkm(new THREE.CylinderGeometry(.62,.62,.22,7), mB));
+  G.add(mkm(new THREE.BoxGeometry(1.1,.7,1.1), mBox, 0,0,0, 0,-.46,0));
+  propGs = [];
+  var hexAngles = [0,60,120,180,240,300];
+  for (var hi = 0; hi < hexAngles.length; hi++) {
+    var ha = hexAngles[hi] * Math.PI / 180;
+    var hmx = 2.1*Math.cos(ha), hmz = 2.1*Math.sin(ha);
+    G.add(mkm(new THREE.BoxGeometry(2.1,.07,.07), mA, 0,Math.atan2(hmx,hmz),0, hmx*.5,0,hmz*.5));
+    var pg = new THREE.Group(); pg.position.set(hmx,.14,hmz);
+    for (var b = 0; b < 2; b++) pg.add(mkm(new THREE.BoxGeometry(1.4,.02,.12), mP, 0,b*Math.PI/2,0));
+    G.add(pg); propGs.push(pg);
+  }
+  droneGlow = new THREE.PointLight(0xffffff,0,7); droneGlow.position.set(0,-1,0); G.add(droneGlow);
+  G.traverse(function(c) { if (c.isMesh) c.castShadow = true; });
+  return G;
+}
+
+function setDrone(type) {
+  if (droneRoot) scene.remove(droneRoot);
+  propGs = []; droneGlow = null;
+  if (type === 'custom' && customMdl) { droneRoot = customMdl; scene.add(droneRoot); return; }
+  if (type === 'racing') droneRoot = buildRacing();
+  else if (type === 'delivery') droneRoot = buildDelivery();
+  else droneRoot = buildMavic();
+  scene.add(droneRoot);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TRAIL
+// ─────────────────────────────────────────────────────────────────
+var trailPts = [];
+var tGeo = new THREE.BufferGeometry();
+var tLine = new THREE.Line(tGeo, new THREE.LineBasicMaterial({color: 0x00e5ff, transparent: true, opacity: .5}));
+scene.add(tLine);
+
+function addTrail(x, y, z) {
+  trailPts.push(new THREE.Vector3(x, y, z));
+  if (trailPts.length > 600) trailPts.shift();
+  if (trailPts.length >= 2) tGeo.setFromPoints(trailPts);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// AUDIO
+// ─────────────────────────────────────────────────────────────────
+var aC = null, pO = null, pG = null, aOK = false;
+function initAudio() {
+  if (aOK) return;
+  try {
+    aC = new (window.AudioContext || window.webkitAudioContext)();
+    pO = aC.createOscillator();
+    var f = aC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 190;
+    pG = aC.createGain(); pG.gain.value = 0;
+    pO.type = 'sawtooth'; pO.frequency.value = 80;
+    pO.connect(f); f.connect(pG); pG.connect(aC.destination);
+    pO.start(); aOK = true;
+  } catch(e) {}
+}
+function setHum(v, f) { if (!aOK) return; pG.gain.setTargetAtTime(v, aC.currentTime, .28); pO.frequency.setTargetAtTime(f, aC.currentTime, .45); }
+function beep(f, d, v) { f=f||880; d=d||.09; v=v||.1; if (!aOK) return; try { var o=aC.createOscillator(),g=aC.createGain(); o.frequency.value=f; g.gain.setValueAtTime(v,aC.currentTime); g.gain.exponentialRampToValueAtTime(.0001,aC.currentTime+d); o.connect(g); g.connect(aC.destination); o.start(); o.stop(aC.currentTime+d); } catch(e) {} }
+function tsound() { if (!aOK) return; pO.frequency.setValueAtTime(62,aC.currentTime); pO.frequency.linearRampToValueAtTime(135,aC.currentTime+1.1); pG.gain.setValueAtTime(0,aC.currentTime); pG.gain.linearRampToValueAtTime(.08,aC.currentTime+1.1); }
+function lsound() { if (!aOK) return; pO.frequency.linearRampToValueAtTime(62,aC.currentTime+1); pG.gain.linearRampToValueAtTime(0,aC.currentTime+1.6); }
+['click','touchstart'].forEach(function(ev) { document.addEventListener(ev, initAudio, {once: true}); });
+
+// ─────────────────────────────────────────────────────────────────
+// MISSION STATE
+// ─────────────────────────────────────────────────────────────────
+var P = {x:0, y:0, z:0, yaw:0, spd:1, flying:false, battery:100};
+var C = {x:0, y:0, z:0, yaw:0, flying:false, battery:100};
+var cmdQ = [], curC = null, cFrom = null, cT0 = 0;
+var running = false, shouldStop = false, mDone = true, bDrain = 0, fAngle = 0, frameN = 0;
+
+function ease(t) { return t < .5 ? 2*t*t : -1+(4-2*t)*t; }
+function qm(tx,ty,tz,tyaw,ms,log,fast) { fast=fast||false; cmdQ.push({t:'move',tx:tx,ty:ty,tz:tz,tyaw:tyaw,dur:Math.max(fast?90:300,ms||500),log:log,fast:fast}); P.x=tx; P.y=ty; P.z=tz; P.yaw=tyaw; }
+function qh(ms,log) { cmdQ.push({t:'hover',dur:ms,log:log}); }
+function qfl(dir) { cmdQ.push({t:'flip',dir:dir,dur:700,log:"flip('"+dir+"')"}); }
+function qfn(fn) { cmdQ.push({t:'fn',fn:fn}); }
+
+// ─────────────────────────────────────────────────────────────────
+// SKULPT BUILTINS SETUP
+// Called BEFORE runPython — registers all __d_* JS functions
+// ─────────────────────────────────────────────────────────────────
+function setupBuiltins() {
+  var b = Sk.builtins;
+
+  function sk(fn) { return new Sk.builtin.func(fn); }
+  function N(v, d) { d = (d !== undefined) ? d : 0; return (v != null && v !== Sk.builtin.none.none$) ? Sk.ffi.remapToJs(v) : d; }
+  function S(v, d) { d = (d !== undefined) ? d : ''; return (v != null && v !== Sk.builtin.none.none$) ? Sk.ffi.remapToJs(v) : d; }
+  var NONE = Sk.builtin.none.none$;
+
+  b.__d_connect    = sk(function() { qfn(function() { clog('drone.connect()', 'ls'); beep(440,.1); }); return NONE; });
+  b.__d_disconnect = sk(function() { qfn(function() { clog('drone.disconnect()', 'li'); }); return NONE; });
+
+  b.__d_takeoff = sk(function(h) {
+    var ht = N(h, 3);
+    if (P.flying) { clog('Already flying!', 'lw'); return NONE; }
+    P.flying = true;
+    qm(P.x, P.y, ht, P.yaw, Math.max(900, ht*400/P.spd), 'takeoff(height='+ht+')');
+    qfn(function() { tsound(); });
+    return NONE;
+  });
+
+  b.__d_land = sk(function() {
+    P.flying = false;
+    qm(P.x, P.y, 0, P.yaw, Math.max(900, P.z*400/P.spd), 'land()');
+    qfn(function() { lsound(); });
+    return NONE;
+  });
+
+  b.__d_hover = sk(function(s) { var sec = N(s, 1); qh(sec*1000, 'hover('+sec+'s)'); return NONE; });
+
+  b.__d_return_home = sk(function() {
+    var d = Math.hypot(P.x, P.y);
+    qm(0, 0, P.z, P.yaw, Math.max(600, d*380/P.spd), 'return_home()');
+    return NONE;
+  });
+
+  b.__d_emergency_land = sk(function() { P.flying=false; qm(P.x,P.y,0,P.yaw,400,'emergency_land()'); return NONE; });
+
+  function mkMover(name, xs, zs) {
+    return sk(function(d, sp) {
+      var dist = N(d, 1), spd = N(sp, -1);
+      if (spd > 0) P.spd = Math.max(.1, Math.min(5, spd));
+      var r = P.yaw * Math.PI / 180;
+      qm(P.x + xs(r)*dist, P.y + zs(r)*dist, P.z, P.yaw, Math.max(300, dist*380/P.spd), name+'('+dist+')');
+      return NONE;
+    });
+  }
+  b.__d_move_forward  = mkMover('move_forward',  function(r){return Math.sin(r);},  function(r){return Math.cos(r);});
+  b.__d_move_backward = mkMover('move_backward', function(r){return -Math.sin(r);}, function(r){return -Math.cos(r);});
+  b.__d_move_left     = mkMover('move_left',     function(r){return -Math.cos(r);}, function(r){return Math.sin(r);});
+  b.__d_move_right    = mkMover('move_right',    function(r){return Math.cos(r);},  function(r){return -Math.sin(r);});
+
+  b.__d_move_up   = sk(function(d) { var dist=N(d,1); qm(P.x,P.y,P.z+dist,P.yaw,Math.max(300,dist*360/P.spd),'move_up('+dist+')'); return NONE; });
+  b.__d_move_down = sk(function(d) { var dist=N(d,1); qm(P.x,P.y,Math.max(0,P.z-dist),P.yaw,Math.max(300,dist*360/P.spd),'move_down('+dist+')'); return NONE; });
+
+  b.__d_go_to = sk(function(x, y, z, sp) {
+    var tx=N(x,P.x), ty=N(y,P.y), tz=N(z,P.z), spd=N(sp,-1);
+    if (spd > 0) P.spd = Math.max(.1, Math.min(5, spd));
+    var d = Math.hypot(tx-P.x, ty-P.y, tz-P.z);
+    qm(tx, ty, tz, P.yaw, Math.max(400, d*380/P.spd), 'go_to('+tx.toFixed(1)+','+ty.toFixed(1)+','+tz.toFixed(1)+')');
+    return NONE;
+  });
+
+  b.__d_rotate_cw  = sk(function(deg) { var d=N(deg,90); qm(P.x,P.y,P.z,P.yaw+d,Math.max(250,d*10/P.spd),'rotate_cw('+d+')'); return NONE; });
+  b.__d_rotate_ccw = sk(function(deg) { var d=N(deg,90); qm(P.x,P.y,P.z,P.yaw-d,Math.max(250,d*10/P.spd),'rotate_ccw('+d+')'); return NONE; });
+  b.__d_set_yaw    = sk(function(a) { var ang=N(a,0); qm(P.x,P.y,P.z,ang,350,'set_yaw('+ang+')'); return NONE; });
+  b.__d_face       = sk(function(d) { var dirs={north:0,east:90,south:180,west:270,n:0,e:90,s:180,w:270}; var a=dirs[S(d,'north').toLowerCase()]||0; qm(P.x,P.y,P.z,a,350,"face('"+S(d)+"')"); return NONE; });
+  b.__d_set_speed  = sk(function(s) { P.spd=Math.max(.1,Math.min(5,N(s,1))); qfn(function(){clog('set_speed('+P.spd.toFixed(1)+')','li');beep(660,.06);}); return NONE; });
+  b.__d_flip       = sk(function(d) { qfl(S(d,'forward')); return NONE; });
+
+  // Patterns
+  b.__d_orbit = sk(function(cx, cy, r, laps, dir) {
+    var ocx=N(cx,0), ocy=N(cy,0), rad=N(r,2), l=N(laps,1), dd=S(dir,'cw')==='ccw'?-1:1;
+    clog('orbit(r='+rad+',laps='+l+')', 'li');
+    var steps = Math.ceil(44*l);
+    for (var i=1; i<=steps; i++) { var a=dd*(i/44)*Math.PI*2; qm(ocx+rad*Math.cos(a),ocy+rad*Math.sin(a),P.z,P.yaw,90,null,true); }
+    return NONE;
+  });
+
+  b.__d_circle = sk(function(r, laps) {
+    var rad=N(r,2), l=N(laps,1), sx=P.x, sy=P.y;
+    clog('circle(r='+rad+')', 'li');
+    var steps = Math.ceil(44*l);
+    for (var i=1; i<=steps; i++) { var a=(i/44)*Math.PI*2; qm(sx+rad*Math.sin(a),sy+rad-rad*Math.cos(a),P.z,P.yaw,90,null,true); }
+    return NONE;
+  });
+
+  b.__d_spiral = sk(function(r, h, t) {
+    var rad=N(r,2), ht=N(h,4), turns=N(t,2), sx=P.x, sy=P.y, sz=P.z;
+    clog('spiral(r='+rad+',h='+ht+')', 'li');
+    var steps = Math.ceil(44*turns);
+    for (var i=1; i<=steps; i++) { var a=(i/44)*Math.PI*2; qm(sx+rad*Math.cos(a),sy+rad*Math.sin(a),sz+ht*(i/steps),P.yaw,90,null,true); }
+    return NONE;
+  });
+
+  b.__d_figure_8 = sk(function(size) {
+    var s=N(size,3), cx=P.x, cy=P.y;
+    clog('figure_8(size='+s+')', 'li');
+    for (var i=1;i<=36;i++){var a=(i/36)*Math.PI*2;qm(cx+s*Math.sin(a),cy+s*Math.sin(a)*Math.cos(a),P.z,P.yaw,90,null,true);}
+    for (var i=1;i<=36;i++){var a=(i/36)*Math.PI*2;qm(cx-s*Math.sin(a),cy+s*Math.sin(a)*Math.cos(a),P.z,P.yaw,90,null,true);}
+    return NONE;
+  });
+
+  b.__d_square = sk(function(size) {
+    var s=N(size,2); clog('square('+s+')', 'li');
+    for (var i=0;i<4;i++){var r2=P.yaw*Math.PI/180;qm(P.x+Math.sin(r2)*s,P.y+Math.cos(r2)*s,P.z,P.yaw,Math.max(350,s*380),'side '+(i+1));qm(P.x,P.y,P.z,P.yaw+90,280,null);}
+    return NONE;
+  });
+
+  b.__d_triangle = sk(function(size) {
+    var s=N(size,2); clog('triangle('+s+')', 'li');
+    for (var i=0;i<3;i++){var r2=P.yaw*Math.PI/180;qm(P.x+Math.sin(r2)*s,P.y+Math.cos(r2)*s,P.z,P.yaw,Math.max(350,s*380),'side '+(i+1));qm(P.x,P.y,P.z,P.yaw+120,320,null);}
+    return NONE;
+  });
+
+  b.__d_patrol = sk(function(wps) {
+    var list = Sk.ffi.remapToJs(wps);
+    clog('patrol('+list.length+' pts)', 'li');
+    for (var pi=0; pi<list.length; pi++) {
+      var wp = list[pi], a = Array.isArray(wp) ? wp : Object.values(wp);
+      var tx=+a[0]||0, ty=+a[1]||0, tz=a[2]!=null?+a[2]:P.z;
+      qm(tx,ty,tz,P.yaw,Math.max(400,Math.hypot(tx-P.x,ty-P.y)*380),'-> ('+tx+','+ty+','+tz+')');
+    }
+    return NONE;
+  });
+
+  b.__d_lawnmower = sk(function(w, l, rows) {
+    var ww=N(w,8),ll=N(l,6),rr=N(rows,4); clog('lawnmower', 'li');
+    var sp=ww/rr;
+    for (var i=0;i<=rr;i++){var x=-ww/2+i*sp;qm(x,P.y,P.z,P.yaw,300,null);qm(x,P.y+(i%2===0?ll:-ll),P.z,P.yaw,Math.max(400,ll*320),null);}
+    return NONE;
+  });
+
+  b.__d_zigzag = sk(function(w, d, n) {
+    var ww=N(w,2),dd=N(d,5),nn=N(n,6); clog('zigzag', 'li');
+    var step=dd/nn;
+    for (var i=0;i<nn;i++){var r2=P.yaw*Math.PI/180;var side=i%2===0?ww:-ww;qm(P.x+Math.sin(r2)*step+Math.cos(r2)*side,P.y+Math.cos(r2)*step-Math.sin(r2)*side,P.z,P.yaw,Math.max(200,step*300),null);}
+    return NONE;
+  });
+
+  b.__d_take_photo   = sk(function() { qfn(function(){clog('take_photo()','li');beep(1200,.08);}); return NONE; });
+  b.__d_camera_angle = sk(function(p,y) { qfn(function(){clog('camera_angle('+N(p)+','+N(y)+')','li');}); return NONE; });
+
+  // CV Missions (simulated)
+  b.__d_detect_face = sk(function() {
+    var x=+(Math.random()*.4-.2).toFixed(3), y=+(Math.random()*.4-.2).toFixed(3);
+    clog('detect_face() -> face at ('+x+','+y+')', 'li');
+    return Sk.ffi.remapToPy({detected:true, x:x, y:y, confidence:0.92, label:'human_face'});
+  });
+
+  b.__d_detect_gesture = sk(function() {
+    var gs = ['pointing','peace','thumbs_up','open_hand','fist','okay','pinky'];
+    var g = gs[Math.floor(Math.random()*gs.length)];
+    clog('detect_gesture() -> "'+g+'"', 'li');
+    return Sk.ffi.remapToPy(g);
+  });
+
+  b.__d_detect_object = sk(function(label) {
+    var lbl = S(label, 'object');
+    clog('detect_object("'+lbl+'")', 'li');
+    return Sk.ffi.remapToPy({detected:Math.random()>.3, label:lbl, x:Math.random()-.5, y:Math.random()-.5, confidence:+(Math.random()*.3+.7).toFixed(2)});
+  });
+
+  b.__d_follow_line = sk(function(path, height) {
+    var pts = Sk.ffi.remapToJs(path), ht = N(height, P.z);
+    clog('follow_line('+pts.length+' pts)', 'li');
+    for (var pi=0; pi<pts.length; pi++) {
+      var pt = pts[pi], a = Array.isArray(pt) ? pt : Object.values(pt);
+      qm(+a[0]||0, +a[1]||0, ht, P.yaw, 300, '->('+a[0]+','+a[1]+')', true);
+    }
+    return NONE;
+  });
+
+  b.__d_follow_body  = sk(function() { clog('follow_body() -> tracking','li'); qm(P.x+2,P.y,P.z,P.yaw,1200,'tracking...'); return NONE; });
+  b.__d_detect_color = sk(function(c) { var cl=S(c,'red'); clog('detect_color("'+cl+'")','li'); return Sk.ffi.remapToPy({detected:Math.random()>.3,color:cl,x:Math.random()-.5,y:Math.random()-.5}); });
+  b.__d_detect_qr    = sk(function() { clog('detect_qr() -> DRONELAB-1','li'); return Sk.ffi.remapToPy({detected:true,data:'DRONELAB-1',x:.01,y:-.04}); });
+  b.__d_navigate_to_room = sk(function(room) { var r=S(room,'garage'); clog('navigate_to_room("'+r+'")','li'); qm(P.x+3,P.y+3,P.z,P.yaw,1800,'-> '+r); return NONE; });
+
+  // Sensors
+  b.__d_get_position  = sk(function() { return Sk.ffi.remapToPy([+P.x.toFixed(3), +P.y.toFixed(3), +P.z.toFixed(3)]); });
+  b.__d_get_altitude  = sk(function() { return Sk.ffi.remapToPy(+P.z.toFixed(3)); });
+  b.__d_get_x         = sk(function() { return Sk.ffi.remapToPy(+P.x.toFixed(3)); });
+  b.__d_get_y         = sk(function() { return Sk.ffi.remapToPy(+P.y.toFixed(3)); });
+  b.__d_get_yaw       = sk(function() { return Sk.ffi.remapToPy(+P.yaw.toFixed(1)); });
+  b.__d_get_speed     = sk(function() { return Sk.ffi.remapToPy(P.spd); });
+  b.__d_get_battery   = sk(function() { return Sk.ffi.remapToPy(Math.round(P.battery)); });
+  b.__d_is_flying     = sk(function() { return P.flying ? Sk.builtin.bool.true$ : Sk.builtin.bool.false$; });
+  b.__d_distance_to   = sk(function(x,y,z) { return Sk.ffi.remapToPy(Math.hypot(N(x)-P.x,N(y)-P.y,N(z)-P.z)); });
+  b.__d_print_status  = sk(function() { clog('x='+P.x.toFixed(1)+' y='+P.y.toFixed(1)+' z='+P.z.toFixed(1)+' yaw='+P.yaw.toFixed(0)+' bat='+Math.round(P.battery)+'%','li'); return NONE; });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// THE CRITICAL FIX: builtinRead returns pysimverse.py source
+// Skulpt calls read("pysimverse.py") when Python does:
+//   from pysimverse import Drone
+// ─────────────────────────────────────────────────────────────────
+function builtinRead(x) {
+  // Handle ALL possible ways Skulpt may request pysimverse
+  if (x === 'pysimverse.py' || x === 'pysimverse' ||
+      x.indexOf('pysimverse') !== -1) {
+    return PYSIMVERSE_PY;
+  }
+  if (x.endsWith('/time.js') || x === 'time.py') {
+    return 'def sleep(s):\n  pass\n';
+  }
+  if (Sk.builtinFiles && Sk.builtinFiles['files'][x] !== undefined) {
+    return Sk.builtinFiles['files'][x];
+  }
+  throw new Error("File not found: '" + x + "'");
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MAIN RUN FUNCTION
+// ─────────────────────────────────────────────────────────────────
+function runPython(code) {
+  // 1. Reset mission state
+  P = {x:0, y:0, z:0, yaw:0, spd:1, flying:false, battery:100};
+  cmdQ = []; curC = null;
+
+  // 2. Configure Skulpt with the fixed read function
+  Sk.configure({
+    output: function(txt) {
+      txt.split('\n').forEach(function(l) { if (l.trim()) clog(l, 'lo'); });
+    },
+    read: builtinRead,
+    __future__: Sk.python3,
+    execLimit: 150000
+  });
+
+  // 3. Register all __d_* builtins BEFORE execution
+  setupBuiltins();
+
+  // 4. Execute Python code
+  Sk.misceval.asyncToPromise(function() {
+    return Sk.importMainWithBody('<stdin>', false, code, true);
+  }).then(function() {
+    clog('', 'lo');
+    clog(cmdQ.length + ' commands queued — simulating...', 'ls');
+    beginSim();
+  }).catch(function(err) {
+    var msg = err.tp$str ? err.tp$str().v : String(err);
+    clog('', 'le');
+    clog('ERROR: ' + msg, 'le');
+    document.getElementById('DOT').className = 'err';
+    setRunning(false);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SIMULATION ENGINE
+// ─────────────────────────────────────────────────────────────────
+function beginSim() {
+  trailPts = [];
+  if (tGeo.attributes && tGeo.attributes.position) tGeo.deleteAttribute('position');
+  C = {x:0, y:0, z:0, yaw:0, flying:false, battery:100};
+  bDrain = 0; mDone = false; fAngle = 0; panOff.set(0,0,0);
+}
+
+function simTick(ts) {
+  if (mDone || shouldStop) return;
+
+  // Flush fn commands
+  while (cmdQ.length && cmdQ[0].t === 'fn') cmdQ.shift().fn();
+
+  if (!cmdQ.length && !curC) {
+    if (!mDone) {
+      mDone = true;
+      clog('Mission complete!', 'ls');
+      beep(660,.2); setTimeout(function(){beep(880,.2);},240); setTimeout(function(){beep(1100,.3);},480);
+      setRunning(false);
+    }
+    return;
+  }
+
+  if (!curC && cmdQ.length) {
+    curC = cmdQ.shift(); cFrom = {x:C.x,y:C.y,z:C.z,yaw:C.yaw}; cT0 = ts;
+    if (curC.log) clog(curC.log, 'lc');
+    if (curC.t === 'move') {
+      if (curC.tz > .1 && cFrom.z < .1) tsound();
+      else if (curC.tz < .1 && cFrom.z > .1) lsound();
+      else if (!curC.fast) beep(520,.05,.06);
+    }
+  }
+  if (!curC) return;
+
+  var t = Math.min((ts - cT0) / Math.max(1, curC.dur), 1);
+  var e = curC.fast ? t : ease(t);
+
+  if (curC.t === 'move') {
+    C.x   = cFrom.x   + (curC.tx   - cFrom.x)   * e;
+    C.y   = cFrom.y   + (curC.ty   - cFrom.y)   * e;
+    C.z   = cFrom.z   + (curC.tz   - cFrom.z)   * e;
+    C.yaw = cFrom.yaw + (curC.tyaw - cFrom.yaw) * e;
+  } else if (curC.t === 'flip') {
+    fAngle = e * 360;
+  }
+  C.flying = C.z > .06;
+
+  if (t >= 1) {
+    if (curC.t === 'move') { C.x=curC.tx; C.y=curC.ty; C.z=curC.tz; C.yaw=curC.tyaw; }
+    if (curC.t === 'move') { bDrain+=.28; C.battery=Math.max(0,100-bDrain); P.battery=C.battery; }
+    fAngle = 0; curC = null;
+  }
+
+  if (C.z > .06) addTrail(C.x, C.z, C.y); // Three.js: Y = up
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RENDER LOOP
+// ─────────────────────────────────────────────────────────────────
+var propSpin = 0;
+
+function loop(ts) {
+  frameN++;
+  simTick(ts);
+
+  if (droneRoot) {
+    droneRoot.position.set(C.x, C.z, C.y);
+    droneRoot.rotation.y = -C.yaw * Math.PI / 180;
+    droneRoot.rotation.x = fAngle * Math.PI / 180;
+    droneRoot.rotation.z = 0;
+  }
+
+  var tSpd = C.flying ? (0.30 + P.spd * .05) : 0;
+  propSpin += (tSpd - propSpin) * .08;
+  for (var pi = 0; pi < propGs.length; pi++) {
+    propGs[pi].rotation.y += propSpin * (pi % 2 === 0 ? 1 : -1);
+  }
+
+  if (droneGlow) droneGlow.intensity = C.flying ? .55 : 0;
+
+  if (frameN % 30 === 0 && aOK) {
+    if (C.flying) setHum(.07, 82 + C.z*3 + propSpin*155);
+    else if (!running) setHum(0, 82);
+  }
+
+  if (droneRoot) camTgt.lerp(droneRoot.position, .028);
+  updateCam();
+
+  if (frameN % 8 === 0) {
+    document.getElementById('HX').textContent   = C.x.toFixed(1);
+    document.getElementById('HY').textContent   = C.y.toFixed(1);
+    document.getElementById('HZ').textContent   = C.z.toFixed(1) + 'm';
+    document.getElementById('HYAW').textContent = ((C.yaw%360+360)%360).toFixed(0) + 'deg';
+    document.getElementById('HSPD').textContent = running ? P.spd.toFixed(1) : '-';
+    var bat = Math.round(C.battery);
+    var bel = document.getElementById('HBAT');
+    bel.textContent = bat + '%';
+    bel.style.color = bat > 50 ? 'var(--grn)' : bat > 20 ? 'var(--yel)' : 'var(--red)';
+  }
+
+  rndr.render(scene, cam);
+  requestAnimationFrame(loop);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CONSOLE
+// ─────────────────────────────────────────────────────────────────
+var out = document.getElementById('OUT');
+function clog(msg, cls) {
+  cls = cls || 'lo';
+  var d = document.createElement('div'); d.className = cls; d.textContent = msg;
+  out.appendChild(d); out.scrollTop = 9999;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// UI ACTIONS
+// ─────────────────────────────────────────────────────────────────
+function setRunning(r) {
+  running = r;
+  document.getElementById('RUN').style.display = r ? 'none' : '';
+  document.getElementById('STP').style.display = r ? '' : 'none';
+  document.getElementById('DOT').className = r ? 'live' : '';
+  document.getElementById('RICO').textContent = r ? 'stop' : 'play';
+}
+
+function doRun() {
+  if (running) return;
+  initAudio();
+  shouldStop = false; mDone = true; bDrain = 0;
+  trailPts = [];
+  if (tGeo.attributes && tGeo.attributes.position) tGeo.deleteAttribute('position');
+  if (droneRoot) { droneRoot.position.set(0,0,0); droneRoot.rotation.set(0,0,0); }
+  C = {x:0, y:0, z:0, yaw:0, flying:false, battery:100};
+  out.innerHTML = '';
+  clog('Running mission.py...', 'li');
+  setRunning(true);
+  mobSwitch('sim');
+  setTimeout(function() { runPython(editor.getValue()); }, 50);
+}
+
+function doStop() {
+  shouldStop = true; curC = null; cmdQ = [];
+  clog('Stopped.', 'lw'); setRunning(false);
+  if (aOK) setHum(0, 82);
+}
+
+document.getElementById('RUN').onclick    = doRun;
+document.getElementById('STP').onclick    = doStop;
+document.getElementById('MB_RUN').onclick = doRun;
+
+// Desktop view tabs
+document.querySelectorAll('[data-v]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('[data-v]').forEach(function(b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    var v = btn.dataset.v;
+    var sp = document.getElementById('SP'), cp = document.getElementById('CP'), spl = document.getElementById('SPL');
+    if (v === 'sim')  { sp.style.cssText='flex:1;display:flex'; cp.style.display='none'; spl.style.display='none'; }
+    else if (v === 'code') { sp.style.display='none'; cp.style.cssText='width:100%;display:flex'; spl.style.display='none'; }
+    else { sp.style.cssText='flex:1;display:flex'; cp.style.cssText='width:46%;display:flex'; spl.style.display='block'; }
+    setTimeout(function() { resz(); editor.refresh(); }, 20);
+  });
+});
+
+// Mobile switch
+function mobSwitch(pane) {
+  var sp = document.getElementById('SP'), cp = document.getElementById('CP');
+  sp.classList.remove('ma'); cp.classList.remove('ma');
+  document.getElementById('MB_SIM').classList.remove('on');
+  document.getElementById('MB_CODE').classList.remove('on');
+  if (pane === 'sim')  { sp.classList.add('ma'); document.getElementById('MB_SIM').classList.add('on'); setTimeout(resz, 20); }
+  else { cp.classList.add('ma'); document.getElementById('MB_CODE').classList.add('on'); setTimeout(function(){editor.refresh();}, 20); }
+}
+document.getElementById('MB_SIM').onclick  = function() { mobSwitch('sim'); };
+document.getElementById('MB_CODE').onclick = function() { mobSwitch('code'); };
+document.getElementById('MB_MDL').onclick  = function() { document.getElementById('FGLB').click(); };
+
+// Save / Load Python
+function saveCode() {
+  var b = new Blob([editor.getValue()], {type:'text/plain'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'mission.py'; a.click();
+  clog('Saved mission.py', 'ls');
+}
+function loadCode() { document.getElementById('FPY').click(); }
+document.getElementById('SAVBTN').onclick = saveCode;
+document.getElementById('MSAV').onclick   = saveCode;
+document.getElementById('LOADBTN').onclick = loadCode;
+document.getElementById('MLOD').onclick   = loadCode;
+document.getElementById('FPY').addEventListener('change', function() {
+  if (!this.files[0]) return;
+  var r = new FileReader();
+  r.onload = function(e) { editor.setValue(e.target.result); clog('Loaded: ' + this.files[0].name, 'ls'); }.bind(this);
+  r.readAsText(this.files[0]); this.value = '';
+});
+
+// Upload 3D Model
+function loadGLB(file) {
+  if (!file) return;
+  clog('Loading ' + file.name + '...', 'li');
+  var loader = new THREE.GLTFLoader();
+  loader.load(URL.createObjectURL(file), function(gltf) {
+    customMdl = gltf.scene;
+    var box = new THREE.Box3().setFromObject(customMdl);
+    var sz = box.getSize(new THREE.Vector3());
+    customMdl.scale.setScalar(4 / Math.max(sz.x, sz.y, sz.z, 0.01));
+    customMdl.traverse(function(c) { if (c.isMesh) c.castShadow = true; });
+    document.getElementById('DSEL').value = 'custom';
+    setDrone('custom');
+    clog('Model loaded: ' + file.name, 'ls'); beep(880,.1);
+  }, null, function(err) { clog('Model error: ' + err.message, 'le'); });
+}
+document.getElementById('UPBTN').onclick  = function() { document.getElementById('FGLB').click(); };
+document.getElementById('MMDL').onclick   = function() { document.getElementById('FGLB').click(); };
+document.getElementById('FGLB').addEventListener('change', function() { loadGLB(this.files[0]); this.value = ''; });
+document.getElementById('DSEL').onchange = function() {
+  if (this.value === 'custom') { document.getElementById('FGLB').click(); return; }
+  setDrone(this.value);
+};
+
+// Drag-drop model
+document.body.addEventListener('dragover', function(e) { e.preventDefault(); document.getElementById('DRP').classList.add('show'); });
+document.body.addEventListener('dragleave', function(e) { if (!e.relatedTarget) document.getElementById('DRP').classList.remove('show'); });
+document.body.addEventListener('drop', function(e) {
+  e.preventDefault(); document.getElementById('DRP').classList.remove('show');
+  var f = e.dataTransfer.files[0];
+  if (f && (f.name.endsWith('.glb') || f.name.endsWith('.gltf'))) loadGLB(f);
+  else clog('Drop a .glb or .gltf file', 'lw');
+});
+
+// Environment
+document.getElementById('ENVS').onchange = function() { setEnv(this.value); };
+
+// Theme
+var dark = true;
+document.getElementById('THBTN').onclick = function() {
+  dark = !dark;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.getElementById('THBTN').textContent = dark ? 'Dark' : 'Light';
+  editor.setOption('theme', dark ? 'dracula' : 'eclipse');
+};
+
+// Splitter
+var splEl = document.getElementById('SPL'); var splDrag = false;
+splEl.addEventListener('mousedown', function(e) { splDrag = true; splEl.classList.add('drag'); e.preventDefault(); });
+document.addEventListener('mousemove', function(e) {
+  if (!splDrag) return;
+  var rect = document.getElementById('MAIN').getBoundingClientRect();
+  var pct = Math.min(78, Math.max(22, (e.clientX - rect.left) / rect.width * 100));
+  document.getElementById('SP').style.cssText = 'flex:0 0 ' + pct + '%;display:flex';
+  resz();
+});
+document.addEventListener('mouseup', function() { splDrag = false; splEl.classList.remove('drag'); });
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doRun(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCode(); }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// CODEMIRROR EDITOR
+// ─────────────────────────────────────────────────────────────────
+var editor = CodeMirror.fromTextArea(document.getElementById('CODE'), {
+  mode: 'python', theme: 'dracula', lineNumbers: true,
+  autoCloseBrackets: true, matchBrackets: true,
+  indentUnit: 4, tabSize: 4, lineWrapping: false,
+  extraKeys: {
+    'Tab': function(cm) { cm.execCommand('indentMore'); },
+    'Shift-Tab': function(cm) { cm.execCommand('indentLess'); },
+    'Ctrl-Enter': doRun, 'Cmd-Enter': doRun
+  }
+});
+editor.setValue(DEFAULT_CODE);
+editor.setSize('100%', '100%');
+
+// ─────────────────────────────────────────────────────────────────
+// INITIALIZE
+// ─────────────────────────────────────────────────────────────────
+setEnv('night');
+setDrone('mavic');
+resz();
+updateCam();
+
+// Mobile: start on code tab
+if (window.innerWidth <= 760) mobSwitch('code');
+
+clog('DroneLab Pro ready!', 'ls');
+clog('Type your code and press Run', 'li');
+clog('Ctrl+Enter: Run  |  Ctrl+S: Save', 'li');
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
