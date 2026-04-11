@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -275,8 +276,7 @@ var DEFAULT_CODE = [
 ].join('\n');
 
 // ─────────────────────────────────────────────────────────────────
-// PYSIMVERSE MODULE - returned as Python source to Skulpt read()
-// This is the KEY FIX: Skulpt calls read("pysimverse.py")
+// PYSIMVERSE MODULE
 // ─────────────────────────────────────────────────────────────────
 var PYSIMVERSE_PY = [
   "class Drone:",
@@ -742,7 +742,6 @@ function qfn(fn) { cmdQ.push({t:'fn',fn:fn}); }
 
 // ─────────────────────────────────────────────────────────────────
 // SKULPT BUILTINS SETUP
-// Called BEFORE runPython — registers all __d_* JS functions
 // ─────────────────────────────────────────────────────────────────
 function setupBuiltins() {
   var b = Sk.builtins;
@@ -935,23 +934,23 @@ function setupBuiltins() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// THE CRITICAL FIX: builtinRead returns pysimverse.py source
-// Skulpt calls read("pysimverse.py") when Python does:
-//   from pysimverse import Drone
+// THE CRITICAL FIX: Properly structured builtinRead
+// Skulpt calls read() and attempts multiple file extensions.
+// Throwing string errors forces Skulpt to check the next path.
 // ─────────────────────────────────────────────────────────────────
 function builtinRead(x) {
-  // Handle ALL possible ways Skulpt may request pysimverse
-  if (x === 'pysimverse.py' || x === 'pysimverse' ||
-      x.indexOf('pysimverse') !== -1) {
+  // Only return our mock Python code if Skulpt is specifically asking for a .py file
+  if (x.indexOf('pysimverse') !== -1 && x.endsWith('.py')) {
     return PYSIMVERSE_PY;
   }
-  if (x.endsWith('/time.js') || x === 'time.py') {
+  if (x.indexOf('time') !== -1 && x.endsWith('.py')) {
     return 'def sleep(s):\n  pass\n';
   }
   if (Sk.builtinFiles && Sk.builtinFiles['files'][x] !== undefined) {
     return Sk.builtinFiles['files'][x];
   }
-  throw new Error("File not found: '" + x + "'");
+  // Skulpt expects a string throw here to trigger its internal fallback mechanism
+  throw "File not found: '" + x + "'";
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -962,7 +961,7 @@ function runPython(code) {
   P = {x:0, y:0, z:0, yaw:0, spd:1, flying:false, battery:100};
   cmdQ = []; curC = null;
 
-  // 2. Configure Skulpt with the fixed read function
+  // 2. Configure Skulpt
   Sk.configure({
     output: function(txt) {
       txt.split('\n').forEach(function(l) { if (l.trim()) clog(l, 'lo'); });
@@ -1288,3 +1287,5 @@ requestAnimationFrame(loop);
 </script>
 </body>
 </html>
+
+```
